@@ -3,18 +3,24 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import PreviousReportsList from "@/components/PreviousReportsList";
-import { getReports, getReportById } from "@/services/reportService";
+import { getReports, getReportById, deleteReport } from "@/services/reportService";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Dashboard = () => {
   const [reports, setReports] = useState([]);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  useEffect(() => {
+  const loadReports = () => {
     // Load reports from local storage
     const loadedReports = getReports();
     setReports(loadedReports);
+  };
+
+  useEffect(() => {
+    loadReports();
   }, []);
 
   const handleViewReport = (reportId: string) => {
@@ -23,6 +29,15 @@ const Dashboard = () => {
 
   const handleNewReport = () => {
     navigate('/');
+  };
+
+  const handleDeleteReport = (reportId: string) => {
+    deleteReport(reportId);
+    loadReports(); // Refresh the list
+    toast({
+      title: "Report deleted",
+      description: "The report has been successfully deleted.",
+    });
   };
 
   return (
@@ -39,7 +54,8 @@ const Dashboard = () => {
 
         <PreviousReportsList 
           reports={reports} 
-          onViewReport={handleViewReport} 
+          onViewReport={handleViewReport}
+          onDeleteReport={handleDeleteReport}
         />
       </main>
       

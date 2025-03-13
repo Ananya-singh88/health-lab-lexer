@@ -4,50 +4,56 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle, ArrowUp, ArrowDown, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export type HealthMetricStatus = "normal" | "warning" | "alert";
+export type HealthMetricStatus = "normal" | "warning" | "alert" | "attention" | "caution";
 
 export interface HealthMetricProps {
-  title: string;
+  name: string;
   value: string | number;
   unit: string;
   status: HealthMetricStatus;
   referenceRange?: string;
   trend?: "up" | "down" | "stable";
   description?: string;
+  change?: number | string;
 }
 
 const HealthMetricCard = ({
-  title,
+  name,
   value,
   unit,
   status,
   referenceRange,
   trend,
   description,
+  change,
 }: HealthMetricProps) => {
   const getStatusColor = (status: HealthMetricStatus) => {
     switch (status) {
       case "normal":
-        return "text-health-normal";
+        return "text-green-500";
       case "warning":
-        return "text-health-warning";
+      case "caution":
+        return "text-amber-500";
       case "alert":
-        return "text-health-alert";
+      case "attention":
+        return "text-red-500";
       default:
-        return "text-health-normal";
+        return "text-green-500";
     }
   };
 
   const getStatusIcon = (status: HealthMetricStatus) => {
     switch (status) {
       case "normal":
-        return <CheckCircle className="h-5 w-5 text-health-normal" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case "warning":
-        return <AlertCircle className="h-5 w-5 text-health-warning" />;
+      case "caution":
+        return <AlertCircle className="h-5 w-5 text-amber-500" />;
       case "alert":
-        return <AlertCircle className="h-5 w-5 text-health-alert" />;
+      case "attention":
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <CheckCircle className="h-5 w-5 text-health-normal" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
     }
   };
 
@@ -62,11 +68,26 @@ const HealthMetricCard = ({
     }
   };
 
+  const getStatusText = (status: HealthMetricStatus) => {
+    switch (status) {
+      case "normal":
+        return "Normal";
+      case "warning":
+      case "caution":
+        return "Borderline";
+      case "alert":
+      case "attention":
+        return "Attention needed";
+      default:
+        return "Normal";
+    }
+  };
+
   return (
     <Card className="health-metric-card overflow-hidden">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-md font-medium">{title}</CardTitle>
+          <CardTitle className="text-md font-medium">{name}</CardTitle>
           {description && (
             <TooltipProvider>
               <Tooltip>
@@ -85,9 +106,10 @@ const HealthMetricCard = ({
         <div className="flex items-end gap-1 mb-1">
           <span className="text-2xl font-bold">{value}</span>
           <span className="text-sm text-muted-foreground">{unit}</span>
-          {trend && (
-            <span className="ml-1 flex items-center text-xs">
-              {getTrendIcon(trend)}
+          {change && (
+            <span className={`ml-1 flex items-center text-xs ${parseFloat(String(change)) > 0 ? 'text-red-500' : parseFloat(String(change)) < 0 ? 'text-green-500' : 'text-gray-500'}`}>
+              {parseFloat(String(change)) > 0 ? '↑' : parseFloat(String(change)) < 0 ? '↓' : ''}
+              {Math.abs(parseFloat(String(change)))}
             </span>
           )}
         </div>
@@ -96,7 +118,7 @@ const HealthMetricCard = ({
           <div className="flex items-center gap-1">
             {getStatusIcon(status)}
             <span className={`text-xs font-medium ${getStatusColor(status)}`}>
-              {status === "normal" ? "Normal" : status === "warning" ? "Borderline" : "Attention needed"}
+              {getStatusText(status)}
             </span>
           </div>
           {referenceRange && (

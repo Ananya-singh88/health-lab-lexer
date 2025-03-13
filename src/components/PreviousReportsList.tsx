@@ -2,16 +2,17 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Eye } from "lucide-react";
+import { FileText, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReportData } from "@/services/reportService";
 
 interface PreviousReportsListProps {
   reports: ReportData[];
   onViewReport: (reportId: string) => void;
+  onDeleteReport: (reportId: string) => void;
 }
 
-const PreviousReportsList = ({ reports, onViewReport }: PreviousReportsListProps) => {
+const PreviousReportsList = ({ reports, onViewReport, onDeleteReport }: PreviousReportsListProps) => {
   if (reports.length === 0) {
     return (
       <Card>
@@ -56,13 +57,20 @@ const PreviousReportsList = ({ reports, onViewReport }: PreviousReportsListProps
                   {new Date(report.uploadDate).toLocaleDateString()}
                 </TableCell>
                 <TableCell>{report.fileType}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right flex items-center justify-end gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => onViewReport(report.id)}
                   >
                     <Eye className="h-4 w-4 mr-1" /> View
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => onDeleteReport(report.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" /> Delete
                   </Button>
                 </TableCell>
               </TableRow>

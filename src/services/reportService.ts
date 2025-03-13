@@ -41,6 +41,16 @@ export const getReportById = (id: string): ReportData | undefined => {
   }
 };
 
+export const deleteReport = (id: string): void => {
+  try {
+    const reports = getReports();
+    const updatedReports = reports.filter(report => report.id !== id);
+    localStorage.setItem('health_reports', JSON.stringify(updatedReports));
+  } catch (error) {
+    console.error('Error deleting report:', error);
+  }
+};
+
 export const analyzeReport = (fileContent: any): any => {
   // This would be where you'd process the file with AI in a real app
   // For now, we'll generate different results based on the file name and type
