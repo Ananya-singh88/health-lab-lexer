@@ -1,20 +1,86 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload } from "lucide-react";
+import { FileText, Upload, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const UploadSection = ({ onUpload }: { onUpload: (file: File) => void }) => {
-  const [dragging, setDragging] = React.useState(false);
-  const [fileName, setFileName] = React.useState<string | null>(null);
+const UploadSection = ({ onUpload }: { onUpload: (file: File, fileContent: any) => void }) => {
+  const [dragging, setDragging] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const processFile = async (file: File) => {
+    setProcessing(true);
+    try {
+      // Different handling based on file type
+      let fileContent;
+      
+      if (file.type === 'application/pdf') {
+        // For PDFs, we'd normally use a PDF.js or similar library
+        // For demo purposes, we'll simulate extraction with file metadata
+        fileContent = {
+          type: 'pdf',
+          name: file.name,
+          size: file.size,
+          lastModified: new Date(file.lastModified).toISOString(),
+          content: `Extracted content from PDF: ${file.name}`,
+        };
+      } else if (file.type.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+        // For Word docs, we'd normally use a document processing library
+        fileContent = {
+          type: 'document',
+          name: file.name,
+          size: file.size,
+          lastModified: new Date(file.lastModified).toISOString(),
+          content: `Extracted content from document: ${file.name}`,
+        };
+      } else if (file.type.includes('image')) {
+        // For images, we could use OCR in a real implementation
+        fileContent = {
+          type: 'image',
+          name: file.name,
+          size: file.size,
+          lastModified: new Date(file.lastModified).toISOString(),
+          content: `Extracted content from image: ${file.name}`,
+        };
+      } else {
+        // Fallback for other file types
+        fileContent = {
+          type: 'unknown',
+          name: file.name,
+          size: file.size,
+          lastModified: new Date(file.lastModified).toISOString(),
+          content: `Unknown file type: ${file.name}`,
+        };
+      }
+      
+      setFileName(file.name);
+      onUpload(file, fileContent);
+      
+      toast({
+        title: `${file.name} uploaded successfully`,
+        description: "Analyzing your health data...",
+      });
+    } catch (error) {
+      console.error("Error processing file:", error);
+      toast({
+        title: "Error processing file",
+        description: "Please try again with a different file",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFileName(file.name);
-      onUpload(file);
+      processFile(file);
     }
   };
 
@@ -33,8 +99,7 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File) => void }) => {
     
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      setFileName(file.name);
-      onUpload(file);
+      processFile(file);
     }
   };
 
@@ -47,14 +112,14 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File) => void }) => {
       <CardHeader>
         <CardTitle className="text-xl">Upload Lab Report</CardTitle>
         <CardDescription>
-          Upload your lab report PDF or image to get AI-powered insights
+          Upload your lab report PDF, document, or image to get AI-powered insights
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
             dragging ? "border-primary bg-primary/5" : "border-muted-foreground/20"
-          }`}
+          } ${processing ? "opacity-50 pointer-events-none" : ""}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -75,13 +140,13 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File) => void }) => {
               )}
             </p>
             <p className="text-sm text-muted-foreground">
-              Supports PDF, JPG, PNG formats
+              Supports PDF, DOC, DOCX, JPG, PNG formats
             </p>
           </div>
           <Input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
             className="hidden"
             onChange={handleFileChange}
           />
@@ -90,8 +155,9 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File) => void }) => {
           <Button 
             onClick={triggerFileInput} 
             className="w-full"
+            disabled={processing}
           >
-            Select File
+            {processing ? "Processing..." : "Select File"}
           </Button>
         </div>
       </CardContent>
