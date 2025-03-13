@@ -12,6 +12,8 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportData } from "@/services/reportService";
+import DietaryPlanner from "@/components/DietaryPlanner";
+import HealthCalendar from "@/components/HealthCalendar";
 
 const ReportView = () => {
   const { id } = useParams<{ id: string }>();
@@ -109,7 +111,10 @@ const ReportView = () => {
         </div>
         
         <div className="mb-8">
-          <HealthSummary text={report.summary.text} overallHealth={report.summary.overallHealth} />
+          <HealthSummary 
+            summaryText={report.summary.text} 
+            overallHealth={report.summary.overallHealth} 
+          />
         </div>
 
         <div className="mb-8">
@@ -146,6 +151,11 @@ const ReportView = () => {
           <div className="md:col-span-1">
             <RecommendationCard {...report.recommendations} />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <DietaryPlanner metrics={report.metrics} />
+          <HealthCalendar />
         </div>
       </main>
       

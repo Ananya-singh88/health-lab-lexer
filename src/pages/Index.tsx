@@ -8,6 +8,8 @@ import HealthSummary from "@/components/HealthSummary";
 import MetricsGrid from "@/components/MetricsGrid";
 import RecommendationCard from "@/components/RecommendationCard";
 import TrendChart from "@/components/TrendChart";
+import DietaryPlanner from "@/components/DietaryPlanner";
+import HealthCalendar from "@/components/HealthCalendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -47,6 +49,7 @@ const Index = () => {
         metrics: results.metrics,
         summary: results.summary,
         recommendations: results.recommendations,
+        dietaryPlan: results.dietaryPlan,
         rawData: fileContent
       };
       
@@ -106,7 +109,10 @@ const Index = () => {
           
           {analysisResults && (
             <div className="md:col-span-2">
-              <HealthSummary {...analysisResults.summary} />
+              <HealthSummary 
+                summaryText={analysisResults.summary.text} 
+                overallHealth={analysisResults.summary.overallHealth} 
+              />
             </div>
           )}
         </div>
@@ -170,6 +176,11 @@ const Index = () => {
               <div className="md:col-span-1">
                 <RecommendationCard {...analysisResults.recommendations} />
               </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <DietaryPlanner metrics={analysisResults.metrics} />
+              <HealthCalendar />
             </div>
           </>
         )}
