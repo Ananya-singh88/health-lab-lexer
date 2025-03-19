@@ -4,7 +4,7 @@ import { HealthMetricProps } from "@/components/HealthMetricCard";
 
 export const demoHealthMetrics: HealthMetricProps[] = [
   {
-    title: "Hemoglobin",
+    name: "Hemoglobin",
     value: 13.5,
     unit: "g/dL",
     status: "normal",
@@ -13,7 +13,7 @@ export const demoHealthMetrics: HealthMetricProps[] = [
     description: "Hemoglobin is a protein in your red blood cells that carries oxygen to your body's organs and tissues."
   },
   {
-    title: "White Blood Cells",
+    name: "White Blood Cells",
     value: 10.8,
     unit: "k/μL",
     status: "warning",
@@ -22,7 +22,7 @@ export const demoHealthMetrics: HealthMetricProps[] = [
     description: "White blood cells help your body fight infections. Elevated levels may indicate an infection or inflammation."
   },
   {
-    title: "Cholesterol (Total)",
+    name: "Cholesterol (Total)",
     value: 240,
     unit: "mg/dL",
     status: "alert",
@@ -31,7 +31,7 @@ export const demoHealthMetrics: HealthMetricProps[] = [
     description: "Total cholesterol is a measure of all cholesterol in your blood. High levels increase risk of heart disease."
   },
   {
-    title: "HDL Cholesterol",
+    name: "HDL Cholesterol",
     value: 65,
     unit: "mg/dL",
     status: "normal",
@@ -40,7 +40,7 @@ export const demoHealthMetrics: HealthMetricProps[] = [
     description: "HDL (High-Density Lipoprotein) is 'good' cholesterol that helps remove other forms of cholesterol from the bloodstream."
   },
   {
-    title: "LDL Cholesterol",
+    name: "LDL Cholesterol",
     value: 145,
     unit: "mg/dL",
     status: "warning",
@@ -49,7 +49,7 @@ export const demoHealthMetrics: HealthMetricProps[] = [
     description: "LDL (Low-Density Lipoprotein) is 'bad' cholesterol that can build up in your arteries."
   },
   {
-    title: "Glucose (Fasting)",
+    name: "Glucose (Fasting)",
     value: 115,
     unit: "mg/dL",
     status: "warning",
@@ -58,7 +58,7 @@ export const demoHealthMetrics: HealthMetricProps[] = [
     description: "Blood glucose measures the amount of sugar in your blood. Elevated levels could indicate prediabetes."
   },
   {
-    title: "Thyroid (TSH)",
+    name: "Thyroid (TSH)",
     value: 2.5,
     unit: "mIU/L",
     status: "normal",
@@ -67,7 +67,7 @@ export const demoHealthMetrics: HealthMetricProps[] = [
     description: "TSH (Thyroid Stimulating Hormone) regulates the production of hormones by the thyroid gland."
   },
   {
-    title: "Vitamin D",
+    name: "Vitamin D",
     value: 29,
     unit: "ng/mL",
     status: "warning",

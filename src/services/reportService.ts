@@ -6,6 +6,7 @@ export interface ReportData {
   metrics: any[];
   summary: any;
   recommendations: any;
+  dietaryPlan?: any;
   rawData?: any;
 }
 

@@ -2,8 +2,8 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Heart, Activity, Lungs, Thermometer, User, Droplet, 
-  Baby, ThermometerSnowflake, Pill 
+  Heart, Activity, Stethoscope, Thermometer, User, Droplet, 
+  Baby, Snowflake, Pill 
 } from "lucide-react";
 
 type HealthCheckCategory = {
@@ -23,7 +23,7 @@ const categories: HealthCheckCategory[] = [
   {
     id: "diabetes",
     name: "Diabetes",
-    icon: <ThermometerSnowflake className="h-6 w-6" />,
+    icon: <Snowflake className="h-6 w-6" />,
     color: "bg-orange-100"
   },
   {
@@ -65,7 +65,7 @@ const categories: HealthCheckCategory[] = [
   {
     id: "liver",
     name: "Liver",
-    icon: <Lungs className="h-6 w-6" />,
+    icon: <Stethoscope className="h-6 w-6" />,
     color: "bg-orange-100"
   },
   {
