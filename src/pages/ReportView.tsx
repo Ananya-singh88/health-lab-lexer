@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getReportById } from "@/services/reportService";
+import { getReportById, generateHumanReadableReport } from "@/services/reportService";
 import Header from "@/components/Header";
 import HealthSummary from "@/components/HealthSummary";
 import MetricsGrid from "@/components/MetricsGrid";
@@ -38,15 +38,17 @@ const ReportView = () => {
   const handleDownload = () => {
     if (!report) return;
     
-    // Create a downloadable report in JSON format
-    const reportData = JSON.stringify(report, null, 2);
-    const blob = new Blob([reportData], { type: 'application/json' });
+    // Generate human-readable content
+    const humanReadableReport = generateHumanReadableReport(report);
+    
+    // Create a text blob for downloading
+    const blob = new Blob([humanReadableReport], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     
     // Create a link and click it to trigger download
     const a = document.createElement('a');
     a.href = url;
-    a.download = `health-report-${report.fileName}.json`;
+    a.download = `health-report-${report.fileName.split('.')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

@@ -14,7 +14,7 @@ import HealthChecks from "@/components/HealthChecks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { analyzeReport, saveReport } from "@/services/reportService";
+import { analyzeReport, saveReport, generateHumanReadableReport } from "@/services/reportService";
 import { v4 as uuidv4 } from "uuid";
 
 const Index = () => {
@@ -69,20 +69,27 @@ const Index = () => {
     
     // Create a downloadable report
     const reportData = {
+      id: uuidv4(),
       fileName,
       fileType,
-      dateGenerated: new Date().toISOString(),
-      results: analysisResults
+      uploadDate: new Date().toISOString(),
+      metrics: analysisResults.metrics,
+      summary: analysisResults.summary,
+      recommendations: analysisResults.recommendations,
+      dietaryPlan: analysisResults.dietaryPlan
     };
     
-    const jsonData = JSON.stringify(reportData, null, 2);
-    const blob = new Blob([jsonData], { type: 'application/json' });
+    // Generate human-readable content
+    const humanReadableReport = generateHumanReadableReport(reportData);
+    
+    // Create a text blob for downloading
+    const blob = new Blob([humanReadableReport], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     
     // Create a link and click it to trigger download
     const a = document.createElement('a');
     a.href = url;
-    a.download = `health-report-${fileName}.json`;
+    a.download = `health-report-${fileName.split('.')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

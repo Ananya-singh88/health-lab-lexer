@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Heart, Kidney, Liver, Thermometer, User, Droplet, 
+  Heart, Activity, Lungs, Thermometer, User, Droplet, 
   Baby, ThermometerSnowflake, Pill 
 } from "lucide-react";
 
@@ -59,13 +59,13 @@ const categories: HealthCheckCategory[] = [
   {
     id: "kidney",
     name: "Kidney",
-    icon: <Kidney className="h-6 w-6" />,
+    icon: <Activity className="h-6 w-6" />,
     color: "bg-orange-100"
   },
   {
     id: "liver",
     name: "Liver",
-    icon: <Liver className="h-6 w-6" />,
+    icon: <Lungs className="h-6 w-6" />,
     color: "bg-orange-100"
   },
   {

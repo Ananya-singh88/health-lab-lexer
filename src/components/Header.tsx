@@ -1,12 +1,14 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Heart, ShoppingCart, Search, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ProfileModal from "@/components/ProfileModal";
 
 const Header = () => {
   const location = useLocation();
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   return (
     <header className="border-b sticky top-0 z-10 bg-background/95 backdrop-blur">
@@ -37,7 +39,11 @@ const Header = () => {
             <Link to="/dashboard" className="text-muted-foreground">
               <ShoppingCart className="h-6 w-6" />
             </Link>
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => setProfileModalOpen(true)}
+            >
               <span>Login</span>
               <User className="h-5 w-5" />
             </Button>
@@ -73,6 +79,8 @@ const Header = () => {
           </Link>
         </nav>
       </div>
+      
+      <ProfileModal open={profileModalOpen} onOpenChange={setProfileModalOpen} />
     </header>
   );
 };
