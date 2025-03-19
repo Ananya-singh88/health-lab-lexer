@@ -1,10 +1,16 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { ProfileModal } from "./ProfileModal";
 
 const Header = () => {
+  const navigate = useNavigate();
+  
+  const handleReportsClick = () => {
+    navigate("/dashboard");
+  };
+
   return (
     <header className="border-b">
       <div className="container flex h-16 items-center justify-between">
@@ -14,8 +20,8 @@ const Header = () => {
         </Link>
         
         <div className="flex items-center gap-4">
-          <Button variant="ghost" asChild>
-            <Link to="/dashboard">Reports</Link>
+          <Button variant="ghost" onClick={handleReportsClick}>
+            Reports
           </Button>
           <ProfileModal />
         </div>

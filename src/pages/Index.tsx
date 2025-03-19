@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import UploadSection from "@/components/UploadSection";
@@ -8,6 +8,7 @@ import HealthSummary from "@/components/HealthSummary";
 import MetricsGrid from "@/components/MetricsGrid";
 import RecommendationCard from "@/components/RecommendationCard";
 import TrendChart from "@/components/TrendChart";
+import BellCurveChart from "@/components/BellCurveChart";
 import DietaryPlanner from "@/components/DietaryPlanner";
 import HealthCalendar from "@/components/HealthCalendar";
 import HealthChecks from "@/components/HealthChecks";
@@ -20,9 +21,42 @@ import { v4 as uuidv4 } from "uuid";
 const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [fileName, setFileName] = useState<string>("");
   const [fileType, setFileType] = useState<string>("");
+  const [selectedTab, setSelectedTab] = useState("glucose");
+
+  // Parse URL parameters to check if a category was selected
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const category = searchParams.get('category');
+    
+    if (category) {
+      // Simulate a report upload for the selected category
+      simulateCategoryReport(category);
+    }
+  }, [location.search]);
+
+  const simulateCategoryReport = (category: string) => {
+    const sampleFile = new File(["sample content"], `${category}-report.pdf`, { type: "application/pdf" });
+    
+    toast({
+      title: `${category} report requested`,
+      description: "Simulating report analysis...",
+    });
+    
+    // Simulate processing delay
+    setTimeout(() => {
+      handleUpload(sampleFile, {
+        type: 'pdf',
+        name: `${category}-report.pdf`,
+        size: 1024,
+        lastModified: new Date().toISOString(),
+        content: `Sample content for ${category} report`,
+      });
+    }, 1000);
+  };
 
   const handleUpload = (file: File, fileContent: any) => {
     // In a real application, this would process the file and extract lab report data
@@ -105,6 +139,42 @@ const Index = () => {
     navigate('/dashboard');
   };
 
+  // Sample data for bell curve
+  const generateBellCurveData = (mean: number, stdDev: number, userValue: number) => {
+    const data = [];
+    const start = mean - 3 * stdDev;
+    const end = mean + 3 * stdDev;
+    const step = (end - start) / 30;
+    
+    for (let x = start; x <= end; x += step) {
+      // Bell curve formula
+      const y = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * 
+                Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
+      data.push({
+        x: Math.round(x),
+        y: y
+      });
+    }
+    
+    return data;
+  };
+
+  // Generate blood glucose bell curve data
+  const glucoseBellCurveData = generateBellCurveData(100, 15, 
+    analysisResults?.metrics.find((m: any) => m.name === "Blood Glucose")?.value || 95);
+    
+  // Generate cholesterol bell curve data
+  const cholesterolBellCurveData = generateBellCurveData(180, 30, 
+    analysisResults?.metrics.find((m: any) => m.name === "Total Cholesterol")?.value || 190);
+    
+  // Generate blood pressure bell curve data  
+  const bpBellCurveData = generateBellCurveData(120, 10, 
+    analysisResults?.metrics.find((m: any) => m.name === "Blood Pressure (Systolic)")?.value || 125);
+    
+  // Generate thyroid bell curve data
+  const thyroidBellCurveData = generateBellCurveData(1.5, 0.5, 
+    analysisResults?.metrics.find((m: any) => m.name === "TSH")?.value || 1.8);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -148,38 +218,108 @@ const Index = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="md:col-span-2">
-                  <Tabs defaultValue="glucose">
+                  <Tabs defaultValue="glucose" value={selectedTab} onValueChange={setSelectedTab}>
                     <TabsList className="mb-2">
-                      <TabsTrigger value="glucose">Glucose Trend</TabsTrigger>
-                      <TabsTrigger value="lipids">Cholesterol Trend</TabsTrigger>
+                      <TabsTrigger value="glucose">Glucose</TabsTrigger>
+                      <TabsTrigger value="cholesterol">Cholesterol</TabsTrigger>
+                      <TabsTrigger value="bp">Blood Pressure</TabsTrigger>
+                      <TabsTrigger value="thyroid">Thyroid</TabsTrigger>
                     </TabsList>
                     <TabsContent value="glucose">
-                      <TrendChart 
-                        title="Blood Glucose (Fasting)" 
-                        data={[
-                          { date: '2023-01-01', value: 110 },
-                          { date: '2023-03-15', value: 95 },
-                          { date: '2023-06-30', value: 105 },
-                          { date: new Date().toISOString().split('T')[0], 
-                            value: analysisResults.metrics.find((m: any) => m.name === "Blood Glucose")?.value || 100 }
-                        ]}
-                        unit="mg/dL"
-                        dataKey="value"
-                      />
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <TrendChart 
+                          title="Blood Glucose (Fasting) Trend" 
+                          data={[
+                            { date: '2023-01-01', value: 110 },
+                            { date: '2023-03-15', value: 95 },
+                            { date: '2023-06-30', value: 105 },
+                            { date: new Date().toISOString().split('T')[0], 
+                              value: analysisResults.metrics.find((m: any) => m.name === "Blood Glucose")?.value || 100 }
+                          ]}
+                          unit="mg/dL"
+                          dataKey="value"
+                        />
+                        <BellCurveChart
+                          title="Blood Glucose Distribution"
+                          data={glucoseBellCurveData}
+                          userValue={analysisResults.metrics.find((m: any) => m.name === "Blood Glucose")?.value || 95}
+                          unit="mg/dL"
+                          referenceMin={70}
+                          referenceMax={99}
+                        />
+                      </div>
                     </TabsContent>
-                    <TabsContent value="lipids">
-                      <TrendChart 
-                        title="Total Cholesterol" 
-                        data={[
-                          { date: '2023-01-01', value: 160 },
-                          { date: '2023-03-15', value: 180 },
-                          { date: '2023-06-30', value: 150 },
-                          { date: new Date().toISOString().split('T')[0], 
-                            value: analysisResults.metrics.find((m: any) => m.name === "Total Cholesterol")?.value || 140 }
-                        ]}
-                        unit="mg/dL"
-                        dataKey="value"
-                      />
+                    <TabsContent value="cholesterol">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <TrendChart 
+                          title="Total Cholesterol Trend" 
+                          data={[
+                            { date: '2023-01-01', value: 160 },
+                            { date: '2023-03-15', value: 180 },
+                            { date: '2023-06-30', value: 150 },
+                            { date: new Date().toISOString().split('T')[0], 
+                              value: analysisResults.metrics.find((m: any) => m.name === "Total Cholesterol")?.value || 140 }
+                          ]}
+                          unit="mg/dL"
+                          dataKey="value"
+                        />
+                        <BellCurveChart
+                          title="Cholesterol Distribution"
+                          data={cholesterolBellCurveData}
+                          userValue={analysisResults.metrics.find((m: any) => m.name === "Total Cholesterol")?.value || 190}
+                          unit="mg/dL"
+                          referenceMin={150}
+                          referenceMax={200}
+                        />
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="bp">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <TrendChart 
+                          title="Blood Pressure Trend" 
+                          data={[
+                            { date: '2023-01-01', value: 128 },
+                            { date: '2023-03-15', value: 120 },
+                            { date: '2023-06-30', value: 124 },
+                            { date: new Date().toISOString().split('T')[0], 
+                              value: analysisResults.metrics.find((m: any) => m.name === "Blood Pressure (Systolic)")?.value || 125 }
+                          ]}
+                          unit="mmHg"
+                          dataKey="value"
+                        />
+                        <BellCurveChart
+                          title="Blood Pressure Distribution"
+                          data={bpBellCurveData}
+                          userValue={analysisResults.metrics.find((m: any) => m.name === "Blood Pressure (Systolic)")?.value || 125}
+                          unit="mmHg"
+                          referenceMin={90}
+                          referenceMax={120}
+                        />
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="thyroid">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <TrendChart 
+                          title="Thyroid (TSH) Trend" 
+                          data={[
+                            { date: '2023-01-01', value: 1.2 },
+                            { date: '2023-03-15', value: 1.5 },
+                            { date: '2023-06-30', value: 1.7 },
+                            { date: new Date().toISOString().split('T')[0], 
+                              value: analysisResults.metrics.find((m: any) => m.name === "TSH")?.value || 1.8 }
+                          ]}
+                          unit="mIU/L"
+                          dataKey="value"
+                        />
+                        <BellCurveChart
+                          title="Thyroid Function Distribution"
+                          data={thyroidBellCurveData}
+                          userValue={analysisResults.metrics.find((m: any) => m.name === "TSH")?.value || 1.8}
+                          unit="mIU/L"
+                          referenceMin={0.4}
+                          referenceMax={4.0}
+                        />
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </div>
