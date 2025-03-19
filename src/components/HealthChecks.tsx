@@ -56,32 +56,33 @@ const HealthChecks = () => {
 
   return (
     <div className="py-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Doctor Created Health Checks</h2>
-        <div className="flex items-center">
-          <div className="relative w-80">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-            <Input
-              type="text"
-              placeholder="Search health checks..."
-              className="pl-10 pr-4 py-2 w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      <div className="flex flex-col items-center mb-8">
+        <h2 className="text-2xl font-bold mb-4">Doctor Created Health Checks</h2>
+        <div className="relative w-full max-w-md">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="h-4 w-4 text-gray-400" />
           </div>
+          <Input
+            type="text"
+            placeholder="Search health checks..."
+            className="pl-10 pr-4 py-2 w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {filteredCategories.map((category) => (
           <Card 
             key={category.id} 
             className="border rounded-2xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => handleCategoryClick(category.id)}
           >
-            <CardContent className="p-6 flex items-center justify-center">
+            <CardContent className="p-6 flex items-center gap-3 justify-center">
+              <div className={`p-2 rounded-full ${category.color}`}>
+                {category.icon}
+              </div>
               <span className="text-lg font-medium">{category.name}</span>
             </CardContent>
           </Card>

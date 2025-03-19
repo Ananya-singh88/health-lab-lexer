@@ -73,11 +73,11 @@ HEALTH METRICS:
   // Add metrics information
   report.metrics.forEach(metric => {
     content += `
-${metric.name}: ${metric.value} ${metric.unit}
-Status: ${metric.status.toUpperCase()}
-Reference Range: ${metric.referenceRange}
-${metric.description}
-${metric.change ? `Change from previous: ${metric.change > 0 ? '+' : ''}${metric.change}` : ''}
+${metric.name}: ${metric.value !== undefined ? `${metric.value} ${metric.unit}` : 'N/A'}
+Status: ${metric.status ? metric.status.toUpperCase() : 'N/A'}
+Reference Range: ${metric.referenceRange || 'N/A'}
+${metric.description || 'No description available'}
+${metric.change !== undefined ? `Change from previous: ${metric.change > 0 ? '+' : ''}${metric.change}` : 'No previous data available'}
 -------------------------------------------------------`;
   });
 
@@ -124,62 +124,38 @@ export const analyzeReport = (fileContent: any): any => {
   const fileNameLower = fileContent.name.toLowerCase();
   
   // Generate different metrics based on filename to simulate real analysis
-  const baseMetrics = [
+  let baseMetrics = [
     {
       name: "Blood Glucose",
-      value: Math.floor(70 + Math.random() * 100),
+      value: Math.random() > 0.9 ? undefined : Math.floor(70 + Math.random() * 100),
       unit: "mg/dL",
       status: Math.random() > 0.5 ? "normal" : "attention",
-      change: Math.floor(Math.random() * 20) - 10,
+      change: Math.random() > 0.9 ? undefined : Math.floor(Math.random() * 20) - 10,
       referenceRange: "70-100 mg/dL",
       description: "Fasting blood glucose levels indicate how effectively your body regulates sugar"
     },
     {
       name: "Total Cholesterol",
-      value: Math.floor(150 + Math.random() * 100),
+      value: Math.random() > 0.9 ? undefined : Math.floor(150 + Math.random() * 100),
       unit: "mg/dL",
       status: Math.random() > 0.7 ? "normal" : "caution",
-      change: Math.floor(Math.random() * 30) - 15,
+      change: Math.random() > 0.9 ? undefined : Math.floor(Math.random() * 30) - 15,
       referenceRange: "125-200 mg/dL",
       description: "Total cholesterol measures all cholesterol in your blood, including HDL and LDL"
     },
     {
       name: "Blood Pressure",
-      value: `${Math.floor(110 + Math.random() * 40)}/${Math.floor(70 + Math.random() * 20)}`,
+      value: Math.random() > 0.9 ? undefined : `${Math.floor(110 + Math.random() * 40)}/${Math.floor(70 + Math.random() * 20)}`,
       unit: "mmHg",
       status: Math.random() > 0.6 ? "normal" : "attention",
-      change: Math.floor(Math.random() * 10) - 5,
+      change: Math.random() > 0.9 ? undefined : Math.floor(Math.random() * 10) - 5,
       referenceRange: "120/80 mmHg",
       description: "Blood pressure is the force of blood pushing against artery walls"
-    },
-    {
-      name: "Hemoglobin",
-      value: (12 + Math.random() * 4).toFixed(1),
-      unit: "g/dL",
-      status: Math.random() > 0.8 ? "normal" : "caution",
-      change: (Math.random() * 2 - 1).toFixed(1),
-      referenceRange: "13.5-17.5 g/dL (men), 12.0-15.5 g/dL (women)",
-      description: "Hemoglobin is a protein in red blood cells that carries oxygen"
-    },
-    {
-      name: "Vitamin D",
-      value: Math.floor(20 + Math.random() * 40),
-      unit: "ng/mL",
-      status: Math.random() > 0.6 ? "normal" : "caution",
-      change: Math.floor(Math.random() * 10) - 5,
-      referenceRange: "20-50 ng/mL",
-      description: "Vitamin D is essential for calcium absorption and bone health"
-    },
-    {
-      name: "Vitamin B12",
-      value: Math.floor(200 + Math.random() * 600),
-      unit: "pg/mL",
-      status: Math.random() > 0.7 ? "normal" : "caution",
-      change: Math.floor(Math.random() * 100) - 50,
-      referenceRange: "200-900 pg/mL",
-      description: "Vitamin B12 is important for nerve function and red blood cell formation"
     }
   ];
+  
+  // Only include metrics that are relevant to the uploaded file type
+  // For example, if it's a thyroid report, always include thyroid metrics and randomly include/exclude others
   
   // Add file-specific metrics based on filename
   if (fileNameLower.includes("glucose") || fileNameLower.includes("diabetes")) {
@@ -201,6 +177,18 @@ export const analyzeReport = (fileContent: any): any => {
       referenceRange: "5-25 μIU/mL",
       description: "Insulin is a hormone that regulates blood glucose levels"
     });
+  } else {
+    // If not a diabetes/glucose report, these values might be absent
+    if (Math.random() > 0.7) {
+      baseMetrics.push({
+        name: "HbA1c",
+        value: undefined,
+        unit: "%",
+        status: "N/A",
+        referenceRange: "4.0-5.6%",
+        description: "HbA1c measures average blood glucose levels over the past 2-3 months"
+      });
+    }
   }
   
   if (fileNameLower.includes("lipid") || fileNameLower.includes("cholesterol")) {
@@ -231,6 +219,18 @@ export const analyzeReport = (fileContent: any): any => {
       referenceRange: "<150 mg/dL",
       description: "Triglycerides are a type of fat in the blood"
     });
+  } else {
+    // If not a lipid/cholesterol report, these values might be absent
+    if (Math.random() > 0.6) {
+      baseMetrics.push({
+        name: "LDL Cholesterol",
+        value: undefined,
+        unit: "mg/dL",
+        status: "N/A",
+        referenceRange: "<100 mg/dL",
+        description: "LDL (bad) cholesterol can build up in your arteries"
+      });
+    }
   }
   
   if (fileNameLower.includes("thyroid")) {
@@ -261,36 +261,18 @@ export const analyzeReport = (fileContent: any): any => {
       referenceRange: "80-180 ng/dL",
       description: "T3 (Triiodothyronine) is an active thyroid hormone"
     });
-  }
-
-  if (fileNameLower.includes("liver") || fileNameLower.includes("hepatic")) {
-    baseMetrics.push({
-      name: "ALT",
-      value: Math.floor(10 + Math.random() * 40),
-      unit: "U/L",
-      status: Math.random() > 0.7 ? "normal" : "caution",
-      change: Math.floor(Math.random() * 10) - 5,
-      referenceRange: "7-56 U/L",
-      description: "ALT (Alanine Transaminase) is an enzyme primarily found in the liver"
-    });
-    baseMetrics.push({
-      name: "AST",
-      value: Math.floor(10 + Math.random() * 30),
-      unit: "U/L",
-      status: Math.random() > 0.7 ? "normal" : "caution",
-      change: Math.floor(Math.random() * 8) - 4,
-      referenceRange: "10-40 U/L",
-      description: "AST (Aspartate Transaminase) is an enzyme found in the liver and other tissues"
-    });
-    baseMetrics.push({
-      name: "Albumin",
-      value: (3.5 + Math.random() * 1.5).toFixed(1),
-      unit: "g/dL",
-      status: Math.random() > 0.8 ? "normal" : "caution",
-      change: (Math.random() * 0.6 - 0.3).toFixed(1),
-      referenceRange: "3.5-5.0 g/dL",
-      description: "Albumin is a protein made by the liver"
-    });
+  } else {
+    // If not a thyroid report, these values might be absent
+    if (Math.random() > 0.7) {
+      baseMetrics.push({
+        name: "TSH",
+        value: undefined,
+        unit: "mIU/L",
+        status: "N/A",
+        referenceRange: "0.4-4.0 mIU/L",
+        description: "TSH (Thyroid Stimulating Hormone) regulates thyroid hormone production"
+      });
+    }
   }
 
   if (fileNameLower.includes("kidney") || fileNameLower.includes("renal")) {
@@ -321,6 +303,18 @@ export const analyzeReport = (fileContent: any): any => {
       referenceRange: ">60 mL/min/1.73m²",
       description: "eGFR estimates how well your kidneys filter blood"
     });
+  } else {
+    // If not a kidney/renal report, these values might be absent
+    if (Math.random() > 0.6) {
+      baseMetrics.push({
+        name: "Creatinine",
+        value: undefined,
+        unit: "mg/dL",
+        status: "N/A",
+        referenceRange: "0.6-1.2 mg/dL (men), 0.5-1.1 mg/dL (women)",
+        description: "Creatinine is a waste product filtered by the kidneys"
+      });
+    }
   }
   
   // Dietary recommendations based on metrics
@@ -423,22 +417,23 @@ export const analyzeReport = (fileContent: any): any => {
     recommendations.push("For more accurate analysis, consider providing digital copies of your lab reports");
   }
   
-  // Count abnormal metrics
-  const abnormalMetricsCount = baseMetrics.filter(m => m.status !== "normal").length;
+  // Count valid (non-undefined) abnormal metrics
+  const validMetricsCount = baseMetrics.filter(m => m.value !== undefined).length;
+  const abnormalMetricsCount = baseMetrics.filter(m => m.value !== undefined && m.status !== "normal").length;
   
   // Determine overall health status based on abnormal metrics
   let overallHealth = "good";
-  if (abnormalMetricsCount > baseMetrics.length / 2) {
+  if (abnormalMetricsCount > validMetricsCount / 2) {
     overallHealth = "needs attention";
   } else if (abnormalMetricsCount > 0) {
     overallHealth = "monitor";
   }
   
   // Generate a summary based on metrics
-  const summaryText = `Based on your ${fileContent.type} report "${fileContent.name}", your overall health appears to be ${overallHealth}. ${abnormalMetricsCount} out of ${baseMetrics.length} metrics require attention. ${
+  const summaryText = `Based on your ${fileContent.type} report "${fileContent.name}", your overall health appears to be ${overallHealth}. ${abnormalMetricsCount} out of ${validMetricsCount} metrics require attention. ${
     abnormalMetricsCount > 0 
       ? `Key areas of concern include ${baseMetrics
-          .filter(m => m.status !== "normal")
+          .filter(m => m.value !== undefined && m.status !== "normal")
           .slice(0, 3)
           .map(m => m.name)
           .join(", ")}.` 
