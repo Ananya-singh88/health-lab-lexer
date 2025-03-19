@@ -47,11 +47,11 @@ const HealthSummary = ({
   };
 
   return (
-    <Card>
+    <Card className="border-none shadow-none bg-gray-50">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-xl">Health Summary</CardTitle>
+            <CardTitle className="text-xl text-primary">Health Summary</CardTitle>
             {(patientName || date) && (
               <CardDescription>
                 {patientName && patientName} {date && `• ${date}`}
