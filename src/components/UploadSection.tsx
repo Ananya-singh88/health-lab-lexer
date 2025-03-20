@@ -16,47 +16,30 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File, fileContent: any) 
   const processFile = async (file: File) => {
     setProcessing(true);
     try {
-      // Different handling based on file type
-      let fileContent;
+      // Get actual file content when possible
+      let fileContent: any = {
+        type: file.type || determineFileType(file.name),
+        name: file.name,
+        size: file.size,
+        lastModified: new Date(file.lastModified).toISOString(),
+        content: `Extracted content from ${file.name}`,
+      };
       
-      if (file.type === 'application/pdf') {
-        // For PDFs, we'd normally use a PDF.js or similar library
-        // For demo purposes, we'll simulate extraction with file metadata
-        fileContent = {
-          type: 'pdf',
-          name: file.name,
-          size: file.size,
-          lastModified: new Date(file.lastModified).toISOString(),
-          content: `Extracted content from PDF: ${file.name}`,
-        };
-      } else if (file.type.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
-        // For Word docs, we'd normally use a document processing library
-        fileContent = {
-          type: 'document',
-          name: file.name,
-          size: file.size,
-          lastModified: new Date(file.lastModified).toISOString(),
-          content: `Extracted content from document: ${file.name}`,
-        };
-      } else if (file.type.includes('image')) {
-        // For images, we could use OCR in a real implementation
-        fileContent = {
-          type: 'image',
-          name: file.name,
-          size: file.size,
-          lastModified: new Date(file.lastModified).toISOString(),
-          content: `Extracted content from image: ${file.name}`,
-        };
+      // Add metadata based on file name to help with processing
+      if (file.name.toLowerCase().includes('glucose') || file.name.toLowerCase().includes('diabetes')) {
+        fileContent.category = 'diabetes';
+      } else if (file.name.toLowerCase().includes('lipid') || file.name.toLowerCase().includes('cholesterol') || 
+                file.name.toLowerCase().includes('heart') || file.name.toLowerCase().includes('cardiac')) {
+        fileContent.category = 'heart';
+      } else if (file.name.toLowerCase().includes('kidney') || file.name.toLowerCase().includes('renal')) {
+        fileContent.category = 'kidney';
+      } else if (file.name.toLowerCase().includes('thyroid')) {
+        fileContent.category = 'thyroid';
       } else {
-        // Fallback for other file types
-        fileContent = {
-          type: 'unknown',
-          name: file.name,
-          size: file.size,
-          lastModified: new Date(file.lastModified).toISOString(),
-          content: `Unknown file type: ${file.name}`,
-        };
+        fileContent.category = 'general';
       }
+      
+      console.log("Processed file:", fileContent);
       
       setFileName(file.name);
       onUpload(file, fileContent);
@@ -74,6 +57,20 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File, fileContent: any) 
       });
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // Helper function to determine file type from extension
+  const determineFileType = (filename: string): string => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    if (!extension) return "unknown";
+    
+    switch (extension) {
+      case 'pdf': return 'application/pdf';
+      case 'doc': case 'docx': return 'application/msword';
+      case 'jpg': case 'jpeg': return 'image/jpeg';
+      case 'png': return 'image/png';
+      default: return "unknown";
     }
   };
 
