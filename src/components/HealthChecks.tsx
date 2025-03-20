@@ -50,15 +50,17 @@ const HealthChecks = () => {
   );
 
   const handleCategoryClick = (categoryId: string) => {
-    // Simulate uploading a report for this category
-    navigate(`/?category=${categoryId}`);
+    // Navigate to a dedicated page for each category
+    navigate(`/category/${categoryId}`);
   };
 
   return (
-    <div className="py-6">
+    <div className="py-6 px-4">
       <div className="flex flex-col items-center mb-8">
-        <h2 className="text-2xl font-bold mb-4">Doctor Created Health Checks</h2>
-        <div className="relative w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6">Doctor Created Health Checks</h2>
+        
+        {/* Search bar positioned at the top-middle */}
+        <div className="relative w-full max-w-md mb-4">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
           </div>

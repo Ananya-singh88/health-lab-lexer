@@ -1,3 +1,4 @@
+
 export interface ReportData {
   id: string;
   fileName: string;
@@ -123,8 +124,19 @@ export const analyzeReport = (fileContent: any): any => {
   
   const fileNameLower = fileContent.name.toLowerCase();
   
+  // Define a type for the metrics
+  type Metric = {
+    name: string;
+    value: number | string | undefined;
+    unit: string;
+    status: string;
+    change?: number;
+    referenceRange: string;
+    description: string;
+  };
+  
   // Generate different metrics based on filename to simulate real analysis
-  let baseMetrics = [
+  let baseMetrics: Metric[] = [
     {
       name: "Blood Glucose",
       value: Math.random() > 0.9 ? undefined : Math.floor(70 + Math.random() * 100),
@@ -161,10 +173,10 @@ export const analyzeReport = (fileContent: any): any => {
   if (fileNameLower.includes("glucose") || fileNameLower.includes("diabetes")) {
     baseMetrics.push({
       name: "HbA1c",
-      value: (4 + Math.random() * 3).toFixed(1),
+      value: parseFloat((4 + Math.random() * 3).toFixed(1)),
       unit: "%",
       status: Math.random() > 0.5 ? "normal" : "caution",
-      change: (Math.random() * 1 - 0.5).toFixed(1),
+      change: parseFloat((Math.random() * 1 - 0.5).toFixed(1)),
       referenceRange: "4.0-5.6%",
       description: "HbA1c measures average blood glucose levels over the past 2-3 months"
     });
@@ -185,6 +197,7 @@ export const analyzeReport = (fileContent: any): any => {
         value: undefined,
         unit: "%",
         status: "N/A",
+        change: 0,
         referenceRange: "4.0-5.6%",
         description: "HbA1c measures average blood glucose levels over the past 2-3 months"
       });
@@ -227,6 +240,7 @@ export const analyzeReport = (fileContent: any): any => {
         value: undefined,
         unit: "mg/dL",
         status: "N/A",
+        change: 0,
         referenceRange: "<100 mg/dL",
         description: "LDL (bad) cholesterol can build up in your arteries"
       });
@@ -236,25 +250,25 @@ export const analyzeReport = (fileContent: any): any => {
   if (fileNameLower.includes("thyroid")) {
     baseMetrics.push({
       name: "TSH",
-      value: (0.5 + Math.random() * 4).toFixed(2),
+      value: parseFloat((0.5 + Math.random() * 4).toFixed(2)),
       unit: "mIU/L",
       status: Math.random() > 0.6 ? "normal" : "attention",
-      change: (Math.random() * 1 - 0.5).toFixed(2),
+      change: parseFloat((Math.random() * 1 - 0.5).toFixed(2)),
       referenceRange: "0.4-4.0 mIU/L",
       description: "TSH (Thyroid Stimulating Hormone) regulates thyroid hormone production"
     });
     baseMetrics.push({
       name: "T4",
-      value: (5 + Math.random() * 7).toFixed(1),
+      value: parseFloat((5 + Math.random() * 7).toFixed(1)),
       unit: "μg/dL",
       status: Math.random() > 0.7 ? "normal" : "caution",
-      change: (Math.random() * 2 - 1).toFixed(1),
+      change: parseFloat((Math.random() * 2 - 1).toFixed(1)),
       referenceRange: "5.0-12.0 μg/dL",
       description: "T4 (Thyroxine) is the main thyroid hormone in the blood"
     });
     baseMetrics.push({
       name: "T3",
-      value: (80 + Math.random() * 100).toFixed(0),
+      value: parseInt((80 + Math.random() * 100).toFixed(0)),
       unit: "ng/dL",
       status: Math.random() > 0.7 ? "normal" : "caution",
       change: Math.floor(Math.random() * 30) - 15,
@@ -269,6 +283,7 @@ export const analyzeReport = (fileContent: any): any => {
         value: undefined,
         unit: "mIU/L",
         status: "N/A",
+        change: 0,
         referenceRange: "0.4-4.0 mIU/L",
         description: "TSH (Thyroid Stimulating Hormone) regulates thyroid hormone production"
       });
@@ -278,10 +293,10 @@ export const analyzeReport = (fileContent: any): any => {
   if (fileNameLower.includes("kidney") || fileNameLower.includes("renal")) {
     baseMetrics.push({
       name: "Creatinine",
-      value: (0.6 + Math.random() * 0.8).toFixed(2),
+      value: parseFloat((0.6 + Math.random() * 0.8).toFixed(2)),
       unit: "mg/dL",
       status: Math.random() > 0.7 ? "normal" : "caution",
-      change: (Math.random() * 0.4 - 0.2).toFixed(2),
+      change: parseFloat((Math.random() * 0.4 - 0.2).toFixed(2)),
       referenceRange: "0.6-1.2 mg/dL (men), 0.5-1.1 mg/dL (women)",
       description: "Creatinine is a waste product filtered by the kidneys"
     });
@@ -311,6 +326,7 @@ export const analyzeReport = (fileContent: any): any => {
         value: undefined,
         unit: "mg/dL",
         status: "N/A",
+        change: 0,
         referenceRange: "0.6-1.2 mg/dL (men), 0.5-1.1 mg/dL (women)",
         description: "Creatinine is a waste product filtered by the kidneys"
       });
