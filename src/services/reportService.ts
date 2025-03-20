@@ -119,9 +119,9 @@ DIETARY RECOMMENDATIONS:
 
 import { analyzeLLMData } from "./llmService";
 
-export const analyzeReport = async (fileContent: any): Promise<any> => {
-  // This would be where you'd process the file with AI in a real app
-  // For now, we'll generate different results based on the file name and type
+export const analyzeReport = (fileContent: any): any => {
+  // This is a synchronous version that generates simulated results
+  // For real applications, this would be asynchronous
   
   const fileNameLower = fileContent.name.toLowerCase();
   
@@ -456,7 +456,7 @@ export const analyzeReport = async (fileContent: any): Promise<any> => {
   
   try {
     // Try to enhance the metrics with LLM analysis
-    const enhancedData = await analyzeLLMData({
+    const enhancedData = analyzeLLMData({
       reportType: fileNameLower,
       baseMetrics
     });

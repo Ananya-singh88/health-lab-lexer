@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -41,18 +40,7 @@ const CategoryDetail = () => {
             "Monitor your blood glucose levels regularly",
             "Stay hydrated and limit alcohol consumption"
           ],
-          bellCurveData: {
-            metric: "Blood Glucose",
-            unit: "mg/dL",
-            patientValue: 95,
-            mean: 100,
-            stdDev: 15,
-            min: 70,
-            max: 130,
-            normalRange: { min: 70, max: 99 },
-            preDiabeticRange: { min: 100, max: 125 },
-            diabeticRange: { min: 126, max: 130 }
-          },
+          bellCurveData: generateBellCurveData(100, 15, 95),
           insightsList: [
             { title: "Blood Glucose Trend", content: "Your blood glucose levels have remained stable over the past 6 months, indicating good glycemic control." },
             { title: "HbA1c Status", content: "Your HbA1c level is within the normal range, suggesting good long-term glucose control." },
@@ -82,18 +70,7 @@ const CategoryDetail = () => {
             "Engage in regular cardiovascular exercise",
             "Manage stress through relaxation techniques"
           ],
-          bellCurveData: {
-            metric: "Total Cholesterol",
-            unit: "mg/dL",
-            patientValue: 180,
-            mean: 190,
-            stdDev: 30,
-            min: 130,
-            max: 250,
-            normalRange: { min: 130, max: 199 },
-            borderlineRange: { min: 200, max: 239 },
-            highRange: { min: 240, max: 250 }
-          },
+          bellCurveData: generateBellCurveData(190, 30, 180),
           insightsList: [
             { title: "Blood Pressure Status", content: "Your blood pressure is within the normal range, indicating good cardiovascular health." },
             { title: "Cholesterol Profile", content: "Your LDL cholesterol is slightly elevated. Consider dietary adjustments to reduce it." },
@@ -123,17 +100,7 @@ const CategoryDetail = () => {
             "Maintain healthy blood pressure and blood sugar levels",
             "Avoid excessive use of NSAIDs and other potentially nephrotoxic medications"
           ],
-          bellCurveData: {
-            metric: "eGFR",
-            unit: "mL/min/1.73m²",
-            patientValue: 95,
-            mean: 90,
-            stdDev: 15,
-            min: 60,
-            max: 120,
-            normalRange: { min: 90, max: 120 },
-            mildlyReducedRange: { min: 60, max: 89 }
-          },
+          bellCurveData: generateBellCurveData(90, 15, 95),
           insightsList: [
             { title: "Kidney Function", content: "Your kidney function tests indicate normal filtration ability." },
             { title: "Hydration Status", content: "Your metrics suggest good hydration. Continue maintaining adequate fluid intake." },
@@ -163,18 +130,7 @@ const CategoryDetail = () => {
             "Manage stress through relaxation techniques",
             "Get regular thyroid function tests if you have a family history of thyroid disorders"
           ],
-          bellCurveData: {
-            metric: "TSH",
-            unit: "mIU/L",
-            patientValue: 2.5,
-            mean: 2.0,
-            stdDev: 1.0,
-            min: 0.0,
-            max: 5.0,
-            normalRange: { min: 0.4, max: 4.0 },
-            hypothyroidRange: { min: 4.1, max: 5.0 },
-            hyperthyroidRange: { min: 0.0, max: 0.3 }
-          },
+          bellCurveData: generateBellCurveData(2.0, 1.0, 2.5),
           insightsList: [
             { title: "Thyroid Function", content: "Your thyroid function tests are within normal ranges." },
             { title: "Hormone Balance", content: "Your T3 and T4 levels indicate proper thyroid hormone production." },
@@ -196,6 +152,26 @@ const CategoryDetail = () => {
           insightsList: []
         };
     }
+  };
+
+  // Sample data for bell curve
+  const generateBellCurveData = (mean: number, stdDev: number, userValue: number) => {
+    const data = [];
+    const start = mean - 3 * stdDev;
+    const end = mean + 3 * stdDev;
+    const step = (end - start) / 30;
+    
+    for (let x = start; x <= end; x += step) {
+      // Bell curve formula
+      const y = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * 
+                Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
+      data.push({
+        x: Math.round(x),
+        y: y
+      });
+    }
+    
+    return data;
   };
 
   const categoryInfo = getCategoryInfo(categoryId);
