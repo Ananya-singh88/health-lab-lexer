@@ -1,4 +1,3 @@
-
 export interface ReportData {
   id: string;
   fileName: string;
@@ -118,7 +117,9 @@ DIETARY RECOMMENDATIONS:
   return content;
 };
 
-export const analyzeReport = (fileContent: any): any => {
+import { analyzeLLMData } from "./llmService";
+
+export const analyzeReport = async (fileContent: any): Promise<any> => {
   // This would be where you'd process the file with AI in a real app
   // For now, we'll generate different results based on the file name and type
   
@@ -166,10 +167,7 @@ export const analyzeReport = (fileContent: any): any => {
     }
   ];
   
-  // Only include metrics that are relevant to the uploaded file type
-  // For example, if it's a thyroid report, always include thyroid metrics and randomly include/exclude others
-  
-  // Add file-specific metrics based on filename
+  // Add category-specific metrics based on fileNameLower
   if (fileNameLower.includes("glucose") || fileNameLower.includes("diabetes")) {
     baseMetrics.push({
       name: "HbA1c",
@@ -456,20 +454,281 @@ export const analyzeReport = (fileContent: any): any => {
       : "All your metrics are within normal ranges."
   }`;
   
+  try {
+    // Try to enhance the metrics with LLM analysis
+    const enhancedData = await analyzeLLMData({
+      reportType: fileNameLower,
+      baseMetrics
+    });
+
+    if (enhancedData.status === 'success') {
+      try {
+        // Parse the LLM response
+        const parsedContent = JSON.parse(enhancedData.content);
+        
+        // If we got valid metrics from LLM, use them to enhance baseMetrics
+        if (parsedContent.metrics && Array.isArray(parsedContent.metrics)) {
+          // Make sure each metric has all required fields, defaulting to original metrics if needed
+          const enhancedMetrics = parsedContent.metrics.map((metric: any) => {
+            // Find the original metric if it exists
+            const originalMetric = baseMetrics.find(m => m.name === metric.name);
+            
+            return {
+              name: metric.name,
+              value: metric.value !== undefined ? metric.value : (originalMetric?.value || 'N/A'),
+              unit: metric.unit || (originalMetric?.unit || ''),
+              status: ['normal', 'caution', 'attention'].includes(metric.status) 
+                ? metric.status 
+                : (originalMetric?.status || 'normal'),
+              change: metric.change !== undefined ? metric.change : originalMetric?.change,
+              referenceRange: metric.referenceRange || (originalMetric?.referenceRange || 'N/A'),
+              description: metric.description || (originalMetric?.description || '')
+            };
+          });
+          
+          // Merge with original metrics - add any that don't exist in the enhanced set
+          baseMetrics.forEach(originalMetric => {
+            if (!enhancedMetrics.some(m => m.name === originalMetric.name)) {
+              enhancedMetrics.push(originalMetric);
+            }
+          });
+          
+          // Replace baseMetrics with enhanced version
+          baseMetrics = enhancedMetrics;
+        }
+        
+        // Extract enhanced recommendations
+        const enhancedRecommendations = 
+          parsedContent.recommendations && Array.isArray(parsedContent.recommendations) 
+            ? parsedContent.recommendations 
+            : null;
+            
+        // Generate analysis results with potentially enhanced data
+        return {
+          metrics: baseMetrics.map(metric => ({
+            ...metric,
+            // For metrics not related to the report type, mark as N/A at higher probability
+            value: shouldIncludeMetric(metric.name, fileNameLower) 
+              ? metric.value 
+              : (Math.random() > 0.3 ? undefined : metric.value),
+            unit: metric.unit || '',
+            status: metric.value === undefined ? 'N/A' : metric.status
+          })),
+          summary: {
+            text: parsedContent.trends?.description || generateSummaryText(fileContent, baseMetrics),
+            overallHealth: determineOverallHealth(baseMetrics)
+          },
+          recommendations: {
+            title: "Personalized Health Recommendations",
+            recommendations: enhancedRecommendations || generateRecommendations(fileContent, baseMetrics)
+          },
+          dietaryPlan: {
+            title: "Personalized Dietary Recommendations",
+            recommendations: selectedDietaryRecommendations
+          },
+          rawData: fileContent
+        };
+      } catch (parseError) {
+        console.error("Error parsing LLM response:", parseError);
+        // Fall back to the original metrics if parsing fails
+      }
+    }
+  } catch (llmError) {
+    console.error("Error with LLM analysis:", llmError);
+    // Continue with the original metrics if LLM analysis fails
+  }
+  
+  // Fallback - use original analysis if LLM analysis fails
+  // Filter metrics based on report type and set undefined values
   return {
-    metrics: baseMetrics,
+    metrics: baseMetrics.map(metric => ({
+      ...metric,
+      // For metrics not related to the report type, mark as N/A at higher probability
+      value: shouldIncludeMetric(metric.name, fileNameLower) 
+        ? metric.value 
+        : (Math.random() > 0.3 ? undefined : metric.value),
+      unit: metric.unit || '',
+      status: metric.value === undefined ? 'N/A' : metric.status
+    })),
     summary: {
-      text: summaryText,
-      overallHealth: overallHealth
+      text: generateSummaryText(fileContent, baseMetrics),
+      overallHealth: determineOverallHealth(baseMetrics)
     },
     recommendations: {
       title: "Personalized Health Recommendations",
-      recommendations: recommendations
+      recommendations: generateRecommendations(fileContent, baseMetrics)
     },
     dietaryPlan: {
       title: "Personalized Dietary Recommendations",
-      recommendations: selectedDietaryRecommendations
+      recommendations: generateDietaryRecommendations(baseMetrics)
     },
     rawData: fileContent
   };
 };
+
+// Helper functions to support the main analysis function
+function shouldIncludeMetric(metricName: string, fileNameLower: string): boolean {
+  // Glucose metrics should be included in diabetes reports
+  if ((metricName === "Blood Glucose" || metricName === "HbA1c" || metricName === "Insulin") 
+      && (fileNameLower.includes("glucose") || fileNameLower.includes("diabetes"))) {
+    return true;
+  }
+  
+  // Cholesterol metrics should be included in heart/cardiac/lipid reports
+  if ((metricName.includes("Cholesterol") || metricName === "Triglycerides") 
+      && (fileNameLower.includes("heart") || fileNameLower.includes("cardiac") || fileNameLower.includes("lipid"))) {
+    return true;
+  }
+  
+  // Thyroid metrics should be included in thyroid reports
+  if ((metricName === "TSH" || metricName === "T4" || metricName === "T3") 
+      && fileNameLower.includes("thyroid")) {
+    return true;
+  }
+  
+  // Kidney metrics should be included in kidney/renal reports
+  if ((metricName === "Creatinine" || metricName === "BUN" || metricName === "eGFR") 
+      && (fileNameLower.includes("kidney") || fileNameLower.includes("renal"))) {
+    return true;
+  }
+  
+  // Include some metrics randomly to simulate comprehensive reports
+  return Math.random() > 0.7;
+}
+
+function determineOverallHealth(metrics: any[]): string {
+  // Count valid (non-undefined) abnormal metrics
+  const validMetricsCount = metrics.filter(m => m.value !== undefined).length;
+  const abnormalMetricsCount = metrics.filter(m => m.value !== undefined && m.status !== "normal").length;
+  
+  if (abnormalMetricsCount > validMetricsCount / 2) {
+    return "needs attention";
+  } else if (abnormalMetricsCount > 0) {
+    return "monitor";
+  } else {
+    return "good";
+  }
+}
+
+function generateSummaryText(fileContent: any, metrics: any[]): string {
+  const validMetricsCount = metrics.filter(m => m.value !== undefined).length;
+  const abnormalMetricsCount = metrics.filter(m => m.value !== undefined && m.status !== "normal").length;
+  
+  return `Based on your ${fileContent.type} report "${fileContent.name}", your overall health appears to be ${determineOverallHealth(metrics)}. ${abnormalMetricsCount} out of ${validMetricsCount} metrics require attention. ${
+    abnormalMetricsCount > 0 
+      ? `Key areas of concern include ${metrics
+          .filter(m => m.value !== undefined && m.status !== "normal")
+          .slice(0, 3)
+          .map(m => m.name)
+          .join(", ")}.` 
+      : "All your metrics are within normal ranges."
+  }`;
+}
+
+function generateRecommendations(fileContent: any, metrics: any[]): string[] {
+  // Randomized general recommendations
+  const recommendationSets = [
+    ["Maintain a balanced diet rich in vegetables and fruits", 
+     "Engage in moderate exercise for at least 150 minutes weekly", 
+     "Ensure adequate hydration by drinking 8-10 glasses of water daily"],
+    ["Consider reducing sodium intake to support blood pressure health", 
+     "Aim for 7-8 hours of quality sleep each night", 
+     "Monitor your blood glucose levels regularly"],
+    ["Include omega-3 rich foods in your diet like fatty fish", 
+     "Practice stress reduction techniques such as meditation", 
+     "Schedule a follow-up appointment in 3-6 months"]
+  ];
+  
+  // Select a random set and add a file-specific recommendation
+  let recommendations = [...recommendationSets[Math.floor(Math.random() * recommendationSets.length)]];
+  
+  if (fileContent.type.includes('pdf')) {
+    recommendations.push("Your PDF results show important health indicators - discuss specific findings with your doctor");
+  } else if (fileContent.type.includes('document') || fileContent.type.includes('doc')) {
+    recommendations.push("Your lab document contains detailed health parameters - schedule a review with your healthcare provider");
+  } else if (fileContent.type.includes('image')) {
+    recommendations.push("For more accurate analysis, consider providing digital copies of your lab reports");
+  }
+  
+  return recommendations;
+}
+
+function generateDietaryRecommendations(metrics: any[]): string[] {
+  // Dietary recommendations based on metrics
+  const dietaryRecommendations = {
+    highCholesterol: [
+      "Limit saturated and trans fats found in red meat and full-fat dairy",
+      "Increase soluble fiber from oats, beans, and fruits",
+      "Add fatty fish like salmon to your diet twice weekly",
+      "Include plant sterols found in nuts, seeds, and vegetable oils"
+    ],
+    highGlucose: [
+      "Limit refined carbohydrates and added sugars",
+      "Choose whole grains over processed grains",
+      "Add cinnamon to your diet, which may help lower blood sugar",
+      "Include lean proteins with each meal to stabilize blood sugar"
+    ],
+    vitaminD: [
+      "Include fatty fish, egg yolks, and mushrooms in your diet",
+      "Consider fortified foods like milk, orange juice, and cereals",
+      "Spend 15-30 minutes in the sun a few times per week",
+      "Include vitamin D-rich dairy alternatives like fortified plant milks"
+    ],
+    highBloodPressure: [
+      "Follow the DASH diet (rich in fruits, vegetables, and low-fat dairy)",
+      "Limit sodium intake to less than 2,300mg daily",
+      "Include potassium-rich foods like bananas, potatoes, and avocados",
+      "Consider including beet juice, which may help lower blood pressure"
+    ],
+    anemia: [
+      "Include iron-rich foods like lean red meat, beans, and spinach",
+      "Pair iron-rich foods with vitamin C to enhance absorption",
+      "Include vitamin B12 sources like meat, eggs, and dairy",
+      "Consider adding folate-rich foods like leafy greens and legumes"
+    ]
+  };
+
+  // Select relevant dietary recommendations based on metrics
+  let selectedDietaryRecommendations = [];
+  
+  // Check for abnormal values and add relevant dietary recommendations
+  const cholesterolMetric = metrics.find(m => m.name === "Total Cholesterol");
+  if (cholesterolMetric && cholesterolMetric.status !== "normal") {
+    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.highCholesterol];
+  }
+  
+  const glucoseMetric = metrics.find(m => m.name === "Blood Glucose");
+  if (glucoseMetric && glucoseMetric.status !== "normal") {
+    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.highGlucose];
+  }
+  
+  const vitaminDMetric = metrics.find(m => m.name === "Vitamin D");
+  if (vitaminDMetric && vitaminDMetric.status !== "normal") {
+    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.vitaminD];
+  }
+  
+  const bpMetric = metrics.find(m => m.name === "Blood Pressure");
+  if (bpMetric && bpMetric.status !== "normal") {
+    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.highBloodPressure];
+  }
+  
+  const hemoglobinMetric = metrics.find(m => m.name === "Hemoglobin");
+  if (hemoglobinMetric && hemoglobinMetric.status !== "normal") {
+    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.anemia];
+  }
+  
+  // If no specific conditions were detected, add some general recommendations
+  if (selectedDietaryRecommendations.length === 0) {
+    selectedDietaryRecommendations = [
+      "Maintain a balanced diet with plenty of fruits and vegetables",
+      "Limit processed foods and added sugars",
+      "Stay hydrated by drinking 8-10 glasses of water daily",
+      "Include a variety of protein sources in your diet"
+    ];
+  }
+  
+  // Remove duplicates and limit to 6 recommendations
+  selectedDietaryRecommendations = [...new Set(selectedDietaryRecommendations)].slice(0, 6);
+  
+  return selectedDietaryRecommendations;
+}
