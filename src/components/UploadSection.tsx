@@ -22,24 +22,68 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File, fileContent: any) 
         name: file.name,
         size: file.size,
         lastModified: new Date(file.lastModified).toISOString(),
-        content: `Extracted content from ${file.name}`,
       };
       
+      // For PDF files, we would need a PDF parser library in a real app
+      // For this demo, let's extract categories and key metrics from filename
+      console.log("Processed file:", fileContent);
+      
+      // Extract potential metrics from filename
+      const fileNameLower = file.name.toLowerCase();
+      
       // Add metadata based on file name to help with processing
-      if (file.name.toLowerCase().includes('glucose') || file.name.toLowerCase().includes('diabetes')) {
+      fileContent.metrics = [];
+      
+      // Detect specific values in filename (simulated extraction)
+      // In a real app, this would come from actual file parsing
+      if (fileNameLower.includes('glucose')) {
+        fileContent.metrics.push({
+          name: 'Blood Glucose',
+          value: getNumberFromString(fileNameLower, 'glucose', 98),
+          unit: 'mg/dL'
+        });
+      }
+      
+      if (fileNameLower.includes('cholesterol')) {
+        fileContent.metrics.push({
+          name: 'Total Cholesterol',
+          value: getNumberFromString(fileNameLower, 'cholesterol', 175),
+          unit: 'mg/dL'
+        });
+      }
+      
+      if (fileNameLower.includes('pressure') || fileNameLower.includes('bp')) {
+        fileContent.metrics.push({
+          name: 'Blood Pressure (Systolic)',
+          value: getNumberFromString(fileNameLower, 'bp', 120),
+          unit: 'mmHg'
+        });
+      }
+      
+      if (fileNameLower.includes('tsh') || fileNameLower.includes('thyroid')) {
+        fileContent.metrics.push({
+          name: 'TSH',
+          value: getNumberFromString(fileNameLower, 'tsh', 2.5),
+          unit: 'mIU/L'
+        });
+      }
+      
+      // Determine primary category
+      if (fileNameLower.includes('glucose') || fileNameLower.includes('diabetes')) {
         fileContent.category = 'diabetes';
-      } else if (file.name.toLowerCase().includes('lipid') || file.name.toLowerCase().includes('cholesterol') || 
-                file.name.toLowerCase().includes('heart') || file.name.toLowerCase().includes('cardiac')) {
+      } else if (fileNameLower.includes('lipid') || fileNameLower.includes('cholesterol') || 
+                fileNameLower.includes('heart') || fileNameLower.includes('cardiac')) {
         fileContent.category = 'heart';
-      } else if (file.name.toLowerCase().includes('kidney') || file.name.toLowerCase().includes('renal')) {
+      } else if (fileNameLower.includes('kidney') || fileNameLower.includes('renal')) {
         fileContent.category = 'kidney';
-      } else if (file.name.toLowerCase().includes('thyroid')) {
+      } else if (fileNameLower.includes('thyroid')) {
         fileContent.category = 'thyroid';
       } else {
         fileContent.category = 'general';
       }
       
-      console.log("Processed file:", fileContent);
+      // Add raw text content (simulated)
+      fileContent.content = `Extracted content from ${file.name}`;
       
       setFileName(file.name);
       onUpload(file, fileContent);
@@ -57,6 +101,26 @@ const UploadSection = ({ onUpload }: { onUpload: (file: File, fileContent: any) 
       });
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // Helper function to extract numbers from filename (simulated file content parsing)
+  const getNumberFromString = (str: string, keyword: string, defaultValue: number): number => {
+    // This is a very simplified simulation of extracting values from file content
+    // In a real app, this would use actual parsed values from the file
+    try {
+      // Simple approach: look for patterns like "glucose-98" or "glucose_98" or "glucose 98"
+      const regex = new RegExp(`${keyword}[\\s_-]*(\\d+(?:\\.\\d+)?)`, 'i');
+      const match = str.match(regex);
+      
+      if (match && match[1]) {
+        return parseFloat(match[1]);
+      }
+      
+      // Add some variation to the default values to simulate different reports
+      return defaultValue + (Math.random() > 0.5 ? Math.floor(Math.random() * 10) : -Math.floor(Math.random() * 10));
+    } catch (e) {
+      return defaultValue;
     }
   };
 

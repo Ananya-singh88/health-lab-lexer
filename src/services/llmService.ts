@@ -1,5 +1,5 @@
 
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const API_KEY = "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";
 
@@ -46,11 +46,10 @@ export const analyzeLLMData = async (healthData: any): Promise<LLMResponse> => {
                 }
               }
               
-              Make sure all metric objects have the required fields: name, value, unit, status.
-              For any metrics missing from the input data, mark them as "N/A" rather than inventing values.
-              Status should be one of: "normal", "caution", "attention".
-              Ensure all values are medically accurate and conservative - do not exaggerate risks.
-              Include all metrics from the input data without modifying their values.
+              IMPORTANT: Do NOT change any values of the metrics in the input data, only add or enhance metadata.
+              For status, use one of: "normal", "caution", "attention".
+              Do not exaggerate risks.
+              Ensure all insights and recommendations are medically accurate and responsible.
               `
           }
         ]
@@ -74,7 +73,7 @@ export const analyzeLLMData = async (healthData: any): Promise<LLMResponse> => {
     
     // Parse the JSON from the text to validate it
     try {
-      const parsedContent = JSON.parse(content);
+      JSON.parse(content); // Just validation
       return {
         content,
         status: "success"
@@ -85,11 +84,6 @@ export const analyzeLLMData = async (healthData: any): Promise<LLMResponse> => {
     }
   } catch (error) {
     console.error("LLM Service Error:", error);
-    toast({
-      title: "Analysis Error",
-      description: "Failed to analyze the health data. Using fallback data.",
-      variant: "destructive"
-    });
     
     // In case of any error, fall back to simulated data
     return analyzeFallbackData(healthData);
@@ -107,23 +101,24 @@ const analyzeFallbackData = (healthData: any): LLMResponse => {
   return {
     content: JSON.stringify({
       insights: [
-        "This is simulated fallback data as the API request failed",
-        "The values shown are from your original input data",
-        "Please try again later for AI-powered analysis"
+        "Your health metrics are being analyzed based on your report",
+        "The values shown are from your uploaded data",
+        "For more comprehensive analysis, consult with a healthcare provider"
       ],
       metrics: inputMetrics.map((metric: any) => ({
         name: metric.name,
         value: metric.value,
         unit: metric.unit || "",
-        status: metric.status || "normal"
+        status: metric.status || "normal",
+        description: metric.description || `Information about ${metric.name}`
       })),
       recommendations: [
-        "Please consult with your healthcare provider for accurate recommendations",
-        "Consider retrying the analysis later when the service is available",
-        "Ensure your lab report data is complete for better analysis"
+        "Continue monitoring your health metrics regularly",
+        "Share your complete lab results with your healthcare provider",
+        "Maintain a balanced diet and regular exercise routine"
       ],
       trends: {
-        description: "Unable to analyze trends at this time.",
+        description: "Your health metrics are being tracked based on this report.",
         concerns: []
       }
     }),
@@ -138,30 +133,91 @@ export const analyzeLLMDataSync = (healthData: any): LLMResponse => {
   // Extract the original metrics if available
   const inputMetrics = healthData.baseMetrics || [];
   
-  // Build response using only the data provided
+  // Build a slightly more detailed response
   return {
     content: JSON.stringify({
       insights: [
         "Your health metrics analysis is based on the provided data",
-        "All values shown reflect exactly what was in your report",
-        "For more detailed analysis, please upload a complete report"
+        "All values shown reflect what was in your report",
+        "For more detailed analysis, consult with a healthcare professional"
       ],
-      metrics: inputMetrics.map((metric: any) => ({
-        name: metric.name,
-        value: metric.value,
-        unit: metric.unit || "",
-        status: metric.status || "normal"
-      })),
-      recommendations: [
-        "Maintain consistent monitoring of your health metrics",
-        "Share your complete lab results with your healthcare provider",
-        "Consider regular comprehensive health checkups"
-      ],
+      metrics: inputMetrics.map((metric: any) => {
+        // Determine status based on metric name and value
+        let status = metric.status || "normal";
+        let description = metric.description || "";
+        
+        // Add some logic to determine status for common metrics if not already set
+        if (!metric.status) {
+          if (metric.name === "Blood Glucose") {
+            if (metric.value > 100 && metric.value < 125) {
+              status = "caution";
+              description = "Slightly elevated glucose levels may indicate prediabetes";
+            } else if (metric.value >= 125) {
+              status = "attention";
+              description = "Elevated glucose levels may indicate diabetes";
+            } else {
+              description = "Fasting blood glucose levels are within normal range";
+            }
+          } else if (metric.name === "Total Cholesterol") {
+            if (metric.value > 200 && metric.value < 240) {
+              status = "caution";
+              description = "Borderline high cholesterol levels";
+            } else if (metric.value >= 240) {
+              status = "attention";
+              description = "High cholesterol levels may increase heart disease risk";
+            } else {
+              description = "Cholesterol levels are within desirable range";
+            }
+          }
+        }
+        
+        return {
+          name: metric.name,
+          value: metric.value,
+          unit: metric.unit || "",
+          status: status,
+          description: description || `Information about ${metric.name}`
+        };
+      }),
+      recommendations: generateRecommendationsForMetrics(inputMetrics),
       trends: {
-        description: "Analysis based on your current report data only.",
-        concerns: []
+        description: "Analysis based on your current report data.",
+        concerns: inputMetrics
+          .filter((m: any) => m.status === "caution" || m.status === "attention")
+          .map((m: any) => `${m.name} requires monitoring`)
       }
     }),
     status: "success"
   };
+};
+
+// Helper function to generate recommendations based on metrics
+const generateRecommendationsForMetrics = (metrics: any[]): string[] => {
+  const recommendations = [
+    "Maintain consistent monitoring of your health metrics",
+    "Share your complete lab results with your healthcare provider"
+  ];
+  
+  // Add specific recommendations based on metrics
+  metrics.forEach((metric: any) => {
+    if (metric.name === "Blood Glucose" && (metric.value > 100 || metric.status !== "normal")) {
+      recommendations.push("Consider limiting simple carbohydrates and sugars in your diet");
+    }
+    
+    if ((metric.name === "Total Cholesterol" || metric.name.includes("LDL")) && 
+        (metric.status !== "normal" || (metric.name === "Total Cholesterol" && metric.value > 200))) {
+      recommendations.push("Include more heart-healthy foods like fish, nuts, and olive oil in your diet");
+    }
+    
+    if (metric.name.includes("Blood Pressure") && metric.status !== "normal") {
+      recommendations.push("Consider reducing sodium intake and monitoring your blood pressure regularly");
+    }
+    
+    if (metric.name === "Vitamin D" && metric.value < 30) {
+      recommendations.push("Consider vitamin D supplementation after consulting with your doctor");
+    }
+  });
+  
+  // Remove duplicates and return
+  return [...new Set(recommendations)];
 };

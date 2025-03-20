@@ -120,245 +120,244 @@ DIETARY RECOMMENDATIONS:
 import { analyzeLLMDataSync } from "./llmService";
 
 export const analyzeReport = (fileContent: any): any => {
-  // This is a synchronous version that preserves the original data
-  
   console.log("Analyzing report with input data:", fileContent);
   
   const fileNameLower = fileContent.name.toLowerCase();
   
-  // Define a type for the metrics
-  type Metric = {
-    name: string;
-    value: number | string | undefined;
-    unit: string;
-    status: string;
-    change?: number;
-    referenceRange: string;
-    description: string;
-  };
+  // Create base metrics from any pre-extracted metrics in the file content
+  let baseMetrics = fileContent.metrics || [];
   
-  // Generate different metrics based on filename to simulate real analysis
-  let baseMetrics: Metric[] = [];
-  
-  // Add basic metrics that should always be included
-  baseMetrics.push({
-    name: "Blood Glucose",
-    value: 98, // Set to a fixed value for testing
-    unit: "mg/dL",
-    status: "normal",
-    change: 0,
-    referenceRange: "70-100 mg/dL",
-    description: "Fasting blood glucose levels indicate how effectively your body regulates sugar"
-  });
-  
-  baseMetrics.push({
-    name: "Total Cholesterol",
-    value: 175,
-    unit: "mg/dL",
-    status: "normal",
-    change: 0,
-    referenceRange: "125-200 mg/dL",
-    description: "Total cholesterol measures all cholesterol in your blood, including HDL and LDL"
-  });
-  
-  baseMetrics.push({
-    name: "Blood Pressure",
-    value: "120/80",
-    unit: "mmHg",
-    status: "normal",
-    change: 0,
-    referenceRange: "120/80 mmHg",
-    description: "Blood pressure is the force of blood pushing against artery walls"
-  });
-  
-  // Add category-specific metrics based on fileNameLower
-  if (fileNameLower.includes("glucose") || fileNameLower.includes("diabetes")) {
-    baseMetrics.push({
-      name: "HbA1c",
-      value: 5.4,
-      unit: "%",
-      status: "normal",
-      change: 0,
-      referenceRange: "4.0-5.6%",
-      description: "HbA1c measures average blood glucose levels over the past 2-3 months"
-    });
-    baseMetrics.push({
-      name: "Insulin",
-      value: 12,
-      unit: "μIU/mL",
-      status: "normal",
-      change: 0,
-      referenceRange: "5-25 μIU/mL",
-      description: "Insulin is a hormone that regulates blood glucose levels"
-    });
+  // If no metrics were extracted, create some defaults based on the category
+  if (baseMetrics.length === 0) {
+    // Always add basic metrics if they don't exist
+    if (!baseMetrics.find(m => m.name === "Blood Glucose")) {
+      baseMetrics.push({
+        name: "Blood Glucose",
+        value: 98, 
+        unit: "mg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "70-100 mg/dL",
+        description: "Fasting blood glucose levels indicate how effectively your body regulates sugar"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "Total Cholesterol")) {
+      baseMetrics.push({
+        name: "Total Cholesterol",
+        value: 175,
+        unit: "mg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "125-200 mg/dL",
+        description: "Total cholesterol measures all cholesterol in your blood, including HDL and LDL"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "Blood Pressure")) {
+      baseMetrics.push({
+        name: "Blood Pressure",
+        value: "120/80",
+        unit: "mmHg",
+        status: "normal",
+        change: 0,
+        referenceRange: "120/80 mmHg",
+        description: "Blood pressure is the force of blood pushing against artery walls"
+      });
+    }
   }
   
-  if (fileNameLower.includes("lipid") || fileNameLower.includes("cholesterol") || fileNameLower.includes("heart")) {
-    baseMetrics.push({
-      name: "LDL Cholesterol",
-      value: 90,
-      unit: "mg/dL",
-      status: "normal",
-      change: 0,
-      referenceRange: "<100 mg/dL",
-      description: "LDL (bad) cholesterol can build up in your arteries"
-    });
-    baseMetrics.push({
-      name: "HDL Cholesterol",
-      value: 55,
-      unit: "mg/dL",
-      status: "normal",
-      change: 0,
-      referenceRange: ">40 mg/dL (men), >50 mg/dL (women)",
-      description: "HDL (good) cholesterol helps remove LDL cholesterol from your arteries"
-    });
-    baseMetrics.push({
-      name: "Triglycerides",
-      value: 120,
-      unit: "mg/dL",
-      status: "normal",
-      change: 0,
-      referenceRange: "<150 mg/dL",
-      description: "Triglycerides are a type of fat in the blood"
-    });
+  // Add category-specific metrics if they don't already exist
+  if (fileNameLower.includes("glucose") || fileNameLower.includes("diabetes") || fileContent.category === 'diabetes') {
+    if (!baseMetrics.find(m => m.name === "HbA1c")) {
+      baseMetrics.push({
+        name: "HbA1c",
+        value: 5.4,
+        unit: "%",
+        status: "normal",
+        change: 0,
+        referenceRange: "4.0-5.6%",
+        description: "HbA1c measures average blood glucose levels over the past 2-3 months"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "Insulin")) {
+      baseMetrics.push({
+        name: "Insulin",
+        value: 12,
+        unit: "μIU/mL",
+        status: "normal",
+        change: 0,
+        referenceRange: "5-25 μIU/mL",
+        description: "Insulin is a hormone that regulates blood glucose levels"
+      });
+    }
   }
   
-  if (fileNameLower.includes("thyroid")) {
-    baseMetrics.push({
-      name: "TSH",
-      value: 2.5,
-      unit: "mIU/L",
-      status: "normal",
-      change: 0,
-      referenceRange: "0.4-4.0 mIU/L",
-      description: "TSH (Thyroid Stimulating Hormone) regulates thyroid hormone production"
-    });
-    baseMetrics.push({
-      name: "T4",
-      value: 8.5,
-      unit: "μg/dL",
-      status: "normal",
-      change: 0,
-      referenceRange: "5.0-12.0 μg/dL",
-      description: "T4 (Thyroxine) is the main thyroid hormone in the blood"
-    });
-    baseMetrics.push({
-      name: "T3",
-      value: 120,
-      unit: "ng/dL",
-      status: "normal",
-      change: 0,
-      referenceRange: "80-180 ng/dL",
-      description: "T3 (Triiodothyronine) is an active thyroid hormone"
-    });
+  if (fileNameLower.includes("lipid") || fileNameLower.includes("cholesterol") || fileNameLower.includes("heart") || fileContent.category === 'heart') {
+    if (!baseMetrics.find(m => m.name === "LDL Cholesterol")) {
+      baseMetrics.push({
+        name: "LDL Cholesterol",
+        value: 90,
+        unit: "mg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "<100 mg/dL",
+        description: "LDL (bad) cholesterol can build up in your arteries"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "HDL Cholesterol")) {
+      baseMetrics.push({
+        name: "HDL Cholesterol",
+        value: 55,
+        unit: "mg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: ">40 mg/dL (men), >50 mg/dL (women)",
+        description: "HDL (good) cholesterol helps remove LDL cholesterol from your arteries"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "Triglycerides")) {
+      baseMetrics.push({
+        name: "Triglycerides",
+        value: 120,
+        unit: "mg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "<150 mg/dL",
+        description: "Triglycerides are a type of fat in the blood"
+      });
+    }
+  }
+  
+  if (fileNameLower.includes("thyroid") || fileContent.category === 'thyroid') {
+    if (!baseMetrics.find(m => m.name === "TSH")) {
+      baseMetrics.push({
+        name: "TSH",
+        value: 2.5,
+        unit: "mIU/L",
+        status: "normal",
+        change: 0,
+        referenceRange: "0.4-4.0 mIU/L",
+        description: "TSH (Thyroid Stimulating Hormone) regulates thyroid hormone production"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "T4")) {
+      baseMetrics.push({
+        name: "T4",
+        value: 8.5,
+        unit: "μg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "5.0-12.0 μg/dL",
+        description: "T4 (Thyroxine) is the main thyroid hormone in the blood"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "T3")) {
+      baseMetrics.push({
+        name: "T3",
+        value: 120,
+        unit: "ng/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "80-180 ng/dL",
+        description: "T3 (Triiodothyronine) is an active thyroid hormone"
+      });
+    }
   }
 
-  if (fileNameLower.includes("kidney") || fileNameLower.includes("renal")) {
+  if (fileNameLower.includes("kidney") || fileNameLower.includes("renal") || fileContent.category === 'kidney') {
+    if (!baseMetrics.find(m => m.name === "Creatinine")) {
+      baseMetrics.push({
+        name: "Creatinine",
+        value: 0.9,
+        unit: "mg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "0.6-1.2 mg/dL (men), 0.5-1.1 mg/dL (women)",
+        description: "Creatinine is a waste product filtered by the kidneys"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "BUN")) {
+      baseMetrics.push({
+        name: "BUN",
+        value: 15,
+        unit: "mg/dL",
+        status: "normal",
+        change: 0,
+        referenceRange: "7-20 mg/dL",
+        description: "BUN (Blood Urea Nitrogen) is a waste product filtered by the kidneys"
+      });
+    }
+    
+    if (!baseMetrics.find(m => m.name === "eGFR")) {
+      baseMetrics.push({
+        name: "eGFR",
+        value: 95,
+        unit: "mL/min/1.73m²",
+        status: "normal",
+        change: 0,
+        referenceRange: ">60 mL/min/1.73m²",
+        description: "eGFR estimates how well your kidneys filter blood"
+      });
+    }
+  }
+  
+  // Always include these common metrics if they don't exist yet
+  if (!baseMetrics.find(m => m.name === "Hemoglobin")) {
     baseMetrics.push({
-      name: "Creatinine",
-      value: 0.9,
-      unit: "mg/dL",
+      name: "Hemoglobin",
+      value: 14.5,
+      unit: "g/dL",
       status: "normal",
       change: 0,
-      referenceRange: "0.6-1.2 mg/dL (men), 0.5-1.1 mg/dL (women)",
-      description: "Creatinine is a waste product filtered by the kidneys"
-    });
-    baseMetrics.push({
-      name: "BUN",
-      value: 15,
-      unit: "mg/dL",
-      status: "normal",
-      change: 0,
-      referenceRange: "7-20 mg/dL",
-      description: "BUN (Blood Urea Nitrogen) is a waste product filtered by the kidneys"
-    });
-    baseMetrics.push({
-      name: "eGFR",
-      value: 95,
-      unit: "mL/min/1.73m²",
-      status: "normal",
-      change: 0,
-      referenceRange: ">60 mL/min/1.73m²",
-      description: "eGFR estimates how well your kidneys filter blood"
+      referenceRange: "13.5-17.5 g/dL (men), 12.0-16.0 g/dL (women)",
+      description: "Hemoglobin carries oxygen in red blood cells"
     });
   }
   
-  // Add more comprehensive metrics for all types of reports
-  baseMetrics.push({
-    name: "Hemoglobin",
-    value: 14.5,
-    unit: "g/dL",
-    status: "normal",
-    change: 0,
-    referenceRange: "13.5-17.5 g/dL (men), 12.0-16.0 g/dL (women)",
-    description: "Hemoglobin carries oxygen in red blood cells"
-  });
+  if (!baseMetrics.find(m => m.name === "White Blood Cell Count")) {
+    baseMetrics.push({
+      name: "White Blood Cell Count",
+      value: 7500,
+      unit: "cells/μL",
+      status: "normal",
+      change: 0,
+      referenceRange: "4,500-11,000 cells/μL",
+      description: "White blood cells help fight infection"
+    });
+  }
   
-  baseMetrics.push({
-    name: "White Blood Cell Count",
-    value: 7500,
-    unit: "cells/μL",
-    status: "normal",
-    change: 0,
-    referenceRange: "4,500-11,000 cells/μL",
-    description: "White blood cells help fight infection"
-  });
+  if (!baseMetrics.find(m => m.name === "Platelet Count")) {
+    baseMetrics.push({
+      name: "Platelet Count",
+      value: 250000,
+      unit: "platelets/μL",
+      status: "normal",
+      change: 0,
+      referenceRange: "150,000-450,000 platelets/μL",
+      description: "Platelets help blood clot"
+    });
+  }
   
-  baseMetrics.push({
-    name: "Platelet Count",
-    value: 250000,
-    unit: "platelets/μL",
-    status: "normal",
-    change: 0,
-    referenceRange: "150,000-450,000 platelets/μL",
-    description: "Platelets help blood clot"
-  });
+  if (!baseMetrics.find(m => m.name === "Vitamin D")) {
+    baseMetrics.push({
+      name: "Vitamin D",
+      value: 35,
+      unit: "ng/mL",
+      status: "normal",
+      change: 0,
+      referenceRange: "20-50 ng/mL",
+      description: "Vitamin D is important for bone health and immune function"
+    });
+  }
   
-  baseMetrics.push({
-    name: "Vitamin D",
-    value: 35,
-    unit: "ng/mL",
-    status: "normal",
-    change: 0,
-    referenceRange: "20-50 ng/mL",
-    description: "Vitamin D is important for bone health and immune function"
-  });
-  
-  // Dietary recommendations based on metrics
-  const dietaryRecommendations = {
-    highCholesterol: [
-      "Limit saturated and trans fats found in red meat and full-fat dairy",
-      "Increase soluble fiber from oats, beans, and fruits",
-      "Add fatty fish like salmon to your diet twice weekly",
-      "Include plant sterols found in nuts, seeds, and vegetable oils"
-    ],
-    highGlucose: [
-      "Limit refined carbohydrates and added sugars",
-      "Choose whole grains over processed grains",
-      "Add cinnamon to your diet, which may help lower blood sugar",
-      "Include lean proteins with each meal to stabilize blood sugar"
-    ],
-    vitaminD: [
-      "Include fatty fish, egg yolks, and mushrooms in your diet",
-      "Consider fortified foods like milk, orange juice, and cereals",
-      "Spend 15-30 minutes in the sun a few times per week",
-      "Include vitamin D-rich dairy alternatives like fortified plant milks"
-    ],
-    highBloodPressure: [
-      "Follow the DASH diet (rich in fruits, vegetables, and low-fat dairy)",
-      "Limit sodium intake to less than 2,300mg daily",
-      "Include potassium-rich foods like bananas, potatoes, and avocados",
-      "Consider including beet juice, which may help lower blood pressure"
-    ],
-    anemia: [
-      "Include iron-rich foods like lean red meat, beans, and spinach",
-      "Pair iron-rich foods with vitamin C to enhance absorption",
-      "Include vitamin B12 sources like meat, eggs, and dairy",
-      "Consider adding folate-rich foods like leafy greens and legumes"
-    ]
-  };
-
-  // Select a default set of dietary recommendations
+  // Select appropriate dietary recommendations
   let selectedDietaryRecommendations = [
     "Maintain a balanced diet with plenty of fruits and vegetables",
     "Limit processed foods and added sugars",
@@ -366,7 +365,7 @@ export const analyzeReport = (fileContent: any): any => {
     "Include a variety of protein sources in your diet"
   ];
   
-  // Try to enhance the metrics with LLM analysis
+  // Call the LLM service with our prepared metrics
   try {
     console.log("Calling LLM service with base metrics:", baseMetrics);
     
@@ -384,15 +383,27 @@ export const analyzeReport = (fileContent: any): any => {
         const parsedContent = JSON.parse(enhancedData.content);
         console.log("Parsed LLM content:", parsedContent);
         
-        // Generate analysis results with LLM data
+        // Keep original metric values but enhance with LLM insights
+        const enhancedMetrics = baseMetrics.map(baseMetric => {
+          // Find the corresponding metric from LLM
+          const llmMetric = parsedContent.metrics.find((m: any) => 
+            m.name === baseMetric.name || m.name.includes(baseMetric.name)
+          );
+          
+          // Merge the base metric with LLM insights, but KEEP the original values
+          return {
+            ...baseMetric,
+            status: llmMetric?.status || baseMetric.status || 'normal',
+            description: baseMetric.description || llmMetric?.description || `Information about ${baseMetric.name}`
+          };
+        });
+        
+        // Generate analysis results with enhanced metrics
         return {
-          metrics: parsedContent.metrics.map((metric: any) => ({
-            ...metric,
-            unit: metric.unit || '',
-          })),
+          metrics: enhancedMetrics,
           summary: {
             text: parsedContent.trends?.description || "Analysis based on your current report data.",
-            overallHealth: determineOverallHealth(parsedContent.metrics)
+            overallHealth: determineOverallHealth(enhancedMetrics)
           },
           recommendations: {
             title: "Personalized Health Recommendations",
@@ -436,35 +447,6 @@ export const analyzeReport = (fileContent: any): any => {
 };
 
 // Helper functions to support the main analysis function
-function shouldIncludeMetric(metricName: string, fileNameLower: string): boolean {
-  // Glucose metrics should be included in diabetes reports
-  if ((metricName === "Blood Glucose" || metricName === "HbA1c" || metricName === "Insulin") 
-      && (fileNameLower.includes("glucose") || fileNameLower.includes("diabetes"))) {
-    return true;
-  }
-  
-  // Cholesterol metrics should be included in heart/cardiac/lipid reports
-  if ((metricName.includes("Cholesterol") || metricName === "Triglycerides") 
-      && (fileNameLower.includes("heart") || fileNameLower.includes("cardiac") || fileNameLower.includes("lipid"))) {
-    return true;
-  }
-  
-  // Thyroid metrics should be included in thyroid reports
-  if ((metricName === "TSH" || metricName === "T4" || metricName === "T3") 
-      && fileNameLower.includes("thyroid")) {
-    return true;
-  }
-  
-  // Kidney metrics should be included in kidney/renal reports
-  if ((metricName === "Creatinine" || metricName === "BUN" || metricName === "eGFR") 
-      && (fileNameLower.includes("kidney") || fileNameLower.includes("renal"))) {
-    return true;
-  }
-  
-  // Include some metrics randomly to simulate comprehensive reports
-  return Math.random() > 0.7;
-}
-
 function determineOverallHealth(metrics: any[]): string {
   // Count valid (non-undefined) abnormal metrics
   const validMetricsCount = metrics.filter(m => m.value !== undefined).length;
@@ -495,22 +477,31 @@ function generateSummaryText(fileContent: any, metrics: any[]): string {
 }
 
 function generateRecommendations(fileContent: any, metrics: any[]): string[] {
-  // Randomized general recommendations
-  const recommendationSets = [
-    ["Maintain a balanced diet rich in vegetables and fruits", 
-     "Engage in moderate exercise for at least 150 minutes weekly", 
-     "Ensure adequate hydration by drinking 8-10 glasses of water daily"],
-    ["Consider reducing sodium intake to support blood pressure health", 
-     "Aim for 7-8 hours of quality sleep each night", 
-     "Monitor your blood glucose levels regularly"],
-    ["Include omega-3 rich foods in your diet like fatty fish", 
-     "Practice stress reduction techniques such as meditation", 
-     "Schedule a follow-up appointment in 3-6 months"]
+  // Base recommendations
+  let recommendations = [
+    "Maintain a balanced diet rich in vegetables and fruits", 
+    "Engage in moderate exercise for at least 150 minutes weekly", 
+    "Ensure adequate hydration by drinking 8-10 glasses of water daily"
   ];
   
-  // Select a random set and add a file-specific recommendation
-  let recommendations = [...recommendationSets[Math.floor(Math.random() * recommendationSets.length)]];
+  // Add recommendations based on abnormal metrics
+  metrics.forEach(metric => {
+    if (metric.status && metric.status !== "normal") {
+      if (metric.name === "Blood Glucose" || metric.name === "HbA1c") {
+        recommendations.push("Consider consulting with a diabetes specialist about your glucose levels");
+      } else if (metric.name.includes("Cholesterol")) {
+        recommendations.push("Discuss your cholesterol levels with your healthcare provider");
+      } else if (metric.name.includes("Blood Pressure")) {
+        recommendations.push("Monitor your blood pressure regularly and consider lifestyle changes");
+      } else if (metric.name.includes("TSH") || metric.name.includes("T4") || metric.name.includes("T3")) {
+        recommendations.push("Follow up with an endocrinologist about your thyroid function");
+      } else if (metric.name.includes("Creatinine") || metric.name.includes("BUN") || metric.name.includes("eGFR")) {
+        recommendations.push("Consult with a nephrologist about your kidney function metrics");
+      }
+    }
+  });
   
+  // Add a file-specific recommendation
   if (fileContent.type.includes('pdf')) {
     recommendations.push("Your PDF results show important health indicators - discuss specific findings with your doctor");
   } else if (fileContent.type.includes('document') || fileContent.type.includes('doc')) {
@@ -519,85 +510,6 @@ function generateRecommendations(fileContent: any, metrics: any[]): string[] {
     recommendations.push("For more accurate analysis, consider providing digital copies of your lab reports");
   }
   
-  return recommendations;
-}
-
-function generateDietaryRecommendations(metrics: any[]): string[] {
-  // Dietary recommendations based on metrics
-  const dietaryRecommendations = {
-    highCholesterol: [
-      "Limit saturated and trans fats found in red meat and full-fat dairy",
-      "Increase soluble fiber from oats, beans, and fruits",
-      "Add fatty fish like salmon to your diet twice weekly",
-      "Include plant sterols found in nuts, seeds, and vegetable oils"
-    ],
-    highGlucose: [
-      "Limit refined carbohydrates and added sugars",
-      "Choose whole grains over processed grains",
-      "Add cinnamon to your diet, which may help lower blood sugar",
-      "Include lean proteins with each meal to stabilize blood sugar"
-    ],
-    vitaminD: [
-      "Include fatty fish, egg yolks, and mushrooms in your diet",
-      "Consider fortified foods like milk, orange juice, and cereals",
-      "Spend 15-30 minutes in the sun a few times per week",
-      "Include vitamin D-rich dairy alternatives like fortified plant milks"
-    ],
-    highBloodPressure: [
-      "Follow the DASH diet (rich in fruits, vegetables, and low-fat dairy)",
-      "Limit sodium intake to less than 2,300mg daily",
-      "Include potassium-rich foods like bananas, potatoes, and avocados",
-      "Consider including beet juice, which may help lower blood pressure"
-    ],
-    anemia: [
-      "Include iron-rich foods like lean red meat, beans, and spinach",
-      "Pair iron-rich foods with vitamin C to enhance absorption",
-      "Include vitamin B12 sources like meat, eggs, and dairy",
-      "Consider adding folate-rich foods like leafy greens and legumes"
-    ]
-  };
-
-  // Select relevant dietary recommendations based on metrics
-  let selectedDietaryRecommendations = [];
-  
-  // Check for abnormal values and add relevant dietary recommendations
-  const cholesterolMetric = metrics.find(m => m.name === "Total Cholesterol");
-  if (cholesterolMetric && cholesterolMetric.status !== "normal") {
-    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.highCholesterol];
-  }
-  
-  const glucoseMetric = metrics.find(m => m.name === "Blood Glucose");
-  if (glucoseMetric && glucoseMetric.status !== "normal") {
-    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.highGlucose];
-  }
-  
-  const vitaminDMetric = metrics.find(m => m.name === "Vitamin D");
-  if (vitaminDMetric && vitaminDMetric.status !== "normal") {
-    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.vitaminD];
-  }
-  
-  const bpMetric = metrics.find(m => m.name === "Blood Pressure");
-  if (bpMetric && bpMetric.status !== "normal") {
-    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.highBloodPressure];
-  }
-  
-  const hemoglobinMetric = metrics.find(m => m.name === "Hemoglobin");
-  if (hemoglobinMetric && hemoglobinMetric.status !== "normal") {
-    selectedDietaryRecommendations = [...selectedDietaryRecommendations, ...dietaryRecommendations.anemia];
-  }
-  
-  // If no specific conditions were detected, add some general recommendations
-  if (selectedDietaryRecommendations.length === 0) {
-    selectedDietaryRecommendations = [
-      "Maintain a balanced diet with plenty of fruits and vegetables",
-      "Limit processed foods and added sugars",
-      "Stay hydrated by drinking 8-10 glasses of water daily",
-      "Include a variety of protein sources in your diet"
-    ];
-  }
-  
-  // Remove duplicates and limit to 6 recommendations
-  selectedDietaryRecommendations = [...new Set(selectedDietaryRecommendations)].slice(0, 6);
-  
-  return selectedDietaryRecommendations;
+  // Remove duplicates
+  return [...new Set(recommendations)];
 }
