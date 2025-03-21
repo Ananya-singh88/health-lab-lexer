@@ -50,7 +50,8 @@ const HealthChecks = () => {
   );
 
   const handleCategoryClick = (categoryId: string) => {
-    // Navigate to a dedicated page for each category
+    // Make sure we're navigating to the correct path
+    console.log("Navigating to category:", categoryId);
     navigate(`/category/${categoryId}`);
   };
 
