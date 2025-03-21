@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -14,9 +13,7 @@ import RecommendationCard from "@/components/RecommendationCard";
 import DietaryPlanner from "@/components/DietaryPlanner";
 import HealthCalendar from "@/components/HealthCalendar";
 
-// Helper function to get category-specific metrics
 const getCategoryMetrics = (category: string) => {
-  // Base metrics that are always present
   const baseMetrics = [
     {
       name: "Blood Glucose",
@@ -44,7 +41,6 @@ const getCategoryMetrics = (category: string) => {
     }
   ];
 
-  // Category-specific metrics
   switch(category) {
     case "diabetes":
       return [
@@ -167,7 +163,6 @@ const getCategoryMetrics = (category: string) => {
   }
 };
 
-// Helper function to get category-specific recommendations
 const getCategoryRecommendations = (category: string) => {
   const baseRecommendations = [
     "Maintain a balanced diet rich in vegetables and fruits",
@@ -228,7 +223,6 @@ const getCategoryRecommendations = (category: string) => {
   }
 };
 
-// Helper to get category name
 const getCategoryName = (category: string) => {
   switch(category) {
     case "diabetes": return "Diabetes";
@@ -239,7 +233,6 @@ const getCategoryName = (category: string) => {
   }
 };
 
-// Helper to get primary metric for the category
 const getPrimaryMetric = (category: string) => {
   switch(category) {
     case "diabetes": return "Blood Glucose";
@@ -250,7 +243,6 @@ const getPrimaryMetric = (category: string) => {
   }
 };
 
-// Function to generate bell curve data - fixed to ensure it doesn't return undefined
 function generateBellCurveData(mean: number, stdDev: number, userValue: number) {
   const data = [];
   const start = mean - 3 * stdDev;
@@ -258,7 +250,6 @@ function generateBellCurveData(mean: number, stdDev: number, userValue: number) 
   const step = (end - start) / 30;
   
   for (let x = start; x <= end; x += step) {
-    // Bell curve formula
     const y = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * 
               Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
     data.push({
@@ -274,16 +265,16 @@ function getCategoryTrendValue(category: string, index: number): number {
   switch(category) {
     case "diabetes":
       const glucoseValues = [105, 98, 92, 98];
-      return glucoseValues[index] || 100; // Provide default if undefined
+      return glucoseValues[index] || 100;
     case "heart":
       const cholesterolValues = [190, 180, 175, 175];
-      return cholesterolValues[index] || 180; // Provide default if undefined
+      return cholesterolValues[index] || 180;
     case "kidney":
       const creatinineValues = [1.0, 0.9, 0.95, 0.9];
-      return creatinineValues[index] || 1.0; // Provide default if undefined
+      return creatinineValues[index] || 1.0;
     case "thyroid":
       const tshValues = [2.8, 2.5, 2.6, 2.5];
-      return tshValues[index] || 2.5; // Provide default if undefined
+      return tshValues[index] || 2.5;
     default:
       return 100;
   }
@@ -356,7 +347,6 @@ function getCategoryRiskFactor(category: string, index: number): string {
   const kidneyRisks = ["Chronic Kidney Disease", "Kidney Stones", "Hypertension"];
   const thyroidRisks = ["Hypothyroidism", "Hyperthyroidism", "Autoimmune Thyroiditis"];
   
-  // Ensure index is valid to avoid "undefined" errors
   const safeIndex = index >= 0 && index < 3 ? index : 0;
   
   switch(category) {
@@ -377,16 +367,13 @@ const CategoryDetail = () => {
     recommendations: []  // Initialize with an empty array to avoid map errors
   });
   
-  // Use safe categoryId, defaulting to "general" if undefined
   const safeCategoryId = categoryId || "general";
   const categoryName = getCategoryName(safeCategoryId);
   const primaryMetric = getPrimaryMetric(safeCategoryId);
   
   useEffect(() => {
-    // Add debug log
     console.log("CategoryDetail mounted, categoryId:", safeCategoryId);
     
-    // Load data for this category
     const categoryMetrics = getCategoryMetrics(safeCategoryId);
     setMetrics(categoryMetrics);
     
@@ -398,7 +385,6 @@ const CategoryDetail = () => {
     navigate('/');
   };
   
-  // Create trend data for the primary metric - ensure it's an array with values
   const trendData = [
     { date: '2023-01-01', value: getCategoryTrendValue(safeCategoryId, 0) },
     { date: '2023-03-15', value: getCategoryTrendValue(safeCategoryId, 1) },
@@ -406,7 +392,6 @@ const CategoryDetail = () => {
     { date: '2023-09-15', value: getCategoryTrendValue(safeCategoryId, 3) }
   ];
   
-  // Generate bell curve data
   const bellCurveParams = getCategoryBellCurveParams(safeCategoryId);
   const bellCurveData = generateBellCurveData(
     bellCurveParams.mean,
@@ -451,7 +436,7 @@ const CategoryDetail = () => {
             
             <div className="mb-6">
               <h2 className="text-2xl font-bold mb-4">Health Metrics</h2>
-              <MetricsGrid metrics={metrics} />
+              <MetricsGrid metrics={metrics} category={safeCategoryId} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -468,6 +453,7 @@ const CategoryDetail = () => {
                   <RecommendationCard 
                     title={recommendations.title} 
                     recommendations={recommendations.recommendations || []} 
+                    category={safeCategoryId}
                   />
                 )}
               </div>

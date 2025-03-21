@@ -19,6 +19,7 @@ const ReportView = () => {
   const { id } = useParams<{ id: string }>();
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reportCategory, setReportCategory] = useState<string | undefined>(undefined);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +27,20 @@ const ReportView = () => {
       const reportData = getReportById(id);
       if (reportData) {
         setReport(reportData);
+        
+        // Determine report category based on file name or existing category
+        const fileName = reportData.fileName.toLowerCase();
+        if (fileName.includes('heart') || fileName.includes('cholesterol') || fileName.includes('lipid')) {
+          setReportCategory('heart');
+        } else if (fileName.includes('diabetes') || fileName.includes('glucose')) {
+          setReportCategory('diabetes');
+        } else if (fileName.includes('kidney') || fileName.includes('renal')) {
+          setReportCategory('kidney');
+        } else if (fileName.includes('thyroid')) {
+          setReportCategory('thyroid');
+        } else if (reportData.rawData && reportData.rawData.category) {
+          setReportCategory(reportData.rawData.category);
+        }
       }
       setLoading(false);
     }
@@ -121,7 +136,7 @@ const ReportView = () => {
 
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4">Health Metrics</h2>
-          <MetricsGrid metrics={report.metrics} />
+          <MetricsGrid metrics={report.metrics} category={reportCategory} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -151,7 +166,7 @@ const ReportView = () => {
           </div>
           
           <div className="md:col-span-1">
-            <RecommendationCard {...report.recommendations} />
+            <RecommendationCard {...report.recommendations} category={reportCategory} />
           </div>
         </div>
 
