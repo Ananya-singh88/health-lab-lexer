@@ -1,0 +1,84 @@
+# AI Health Parser
+
+AI Health Parser is an application that uses natural language processing and machine learning to analyze medical reports and provide health insights.
+
+## Project Structure
+
+The project is organized into two main components:
+
+- **Backend**: Python-based API and ML processing
+- **Frontend**: React/TypeScript web application
+
+```
+AI Health Parser/
+├── backend/                  # Python backend code
+│   ├── api/                  # API endpoints and routes
+│   ├── models/               # ML models and processors
+│   ├── utils/                # Utility functions
+│   ├── app.py                # Flask app entry point
+│   ├── server.py             # FastAPI server entry point
+│   └── requirements.txt      # Python dependencies
+├── frontend/                 # React/TypeScript frontend code
+│   ├── public/               # Static assets
+│   ├── src/                  # Source code
+│   └── package.json          # Frontend dependencies
+└── README.md                 # Project documentation
+```
+
+## Getting Started
+
+### Backend Setup
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download NLTK data (if needed)
+python utils/download_nltk_data.py
+
+# Start the FastAPI server
+python server.py
+```
+
+The backend server will run at http://localhost:8000
+
+### Frontend Setup
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+The frontend development server will run at http://localhost:5173
+
+## Features
+
+- Upload and analyze medical reports (PDF, DOC, etc.)
+- Extract health metrics using BioBERT and regex patterns
+- Generate health insights and recommendations
+- Track health trends over time
+- Provide personalized dietary recommendations
+
+## Technologies
+
+- **Backend**: FastAPI, Flask, PyTorch, Transformers, BioBERT
+- **Frontend**: React, TypeScript, Vite, TailwindCSS
+- **ML/NLP**: BioBERT, NLTK, Transformers
+
+## API Endpoints
+
+- `/analyze` - Analyze medical report data
+- `/chat` - General-purpose chat with Claude AI
+- `/upload-pdf` - Upload and process PDF files
+- `/biobert/analyze-text` - Analyze text using BioBERT
+- `/biobert/analyze-pdf` - Analyze PDF using BioBERT
+- `/biobert/extract-entities` - Extract medical entities using BioBERT NER
